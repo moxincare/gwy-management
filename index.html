@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WaytoGWY 豪华备考系统 - 六大模块+饼图+测验</title>
+    <title>WaytoGWY 豪华备考系统 - 最终版</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
@@ -30,10 +30,17 @@
         .module-card { background: #f1f5f9; border-radius: 20px; padding: 8px 12px; text-align: center; }
         .module-card .name { font-weight: bold; }
         .module-card .accuracy { font-size: 1.2rem; font-weight: bold; color: #3b82f6; }
-        .quiz-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10001; }
-        .quiz-card { background: white; border-radius: 32px; padding: 24px; max-width: 500px; width: 90%; }
+        .quiz-modal, .mistake-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10001; }
+        .quiz-card, .mistake-card { background: white; border-radius: 32px; padding: 24px; max-width: 500px; width: 90%; max-height: 80%; overflow-y: auto; }
         .quiz-option { margin: 12px 0; padding: 10px; background: #f1f5f9; border-radius: 40px; cursor: pointer; text-align: center; }
         .quiz-option:hover { background: #e2e8f0; }
+        .mistake-card h3 { margin-bottom: 12px; }
+        .mistake-card .full-text { background: #f8fafc; padding: 12px; border-radius: 16px; margin: 12px 0; white-space: pre-wrap; word-break: break-word; }
+        .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+        .pagination button { background: #e2e8f0; color: #1e293b; padding: 4px 12px; }
+        .pagination button.active { background: #3b82f6; color: white; }
+        .filter-group { margin-bottom: 12px; border: 1px solid #e2e8f0; border-radius: 20px; padding: 12px; }
+        .filter-group label { margin-right: 12px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px; }
         @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } body { padding: 12px; } }
         #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); }
         .lock-card { background: white; border-radius: 32px; padding: 2rem; text-align: center; box-shadow: 0 20px 35px -8px rgba(0,0,0,0.2); width: 300px; }
@@ -58,8 +65,8 @@
 
 <div id="mainContent">
 <div class="container">
-    <h1>🎯 WaytoGWY 豪华备考系统 <span style="font-size:0.9rem;">✨ 饼图统计+成语测验</span></h1>
-    <div class="sub">📸 六大模块 · 真实OCR · 分时段统计 · 选择题背诵</div>
+    <h1>🎯 WaytoGWY 豪华备考系统 <span style="font-size:0.9rem;">✨ 分页成语+弹窗错题+多原因筛选</span></h1>
+    <div class="sub">📸 六大模块 · 真实OCR · 分时段统计 · 成语测验</div>
 
     <!-- 第一行：TODO + 套卷 -->
     <div class="grid">
@@ -84,7 +91,7 @@
                 <button id="todoStatShow">📊 查看饼图</button>
             </div>
             <canvas id="todoPieChart" height="180" style="max-height:180px"></canvas>
-            <div class="small-note">⏱️ 点击任务“开始计时”记录专注时长，饼图展示所选时段各科目用时占比</div>
+            <div class="small-note">⏱️ 点击“开始计时”记录专注时长，饼图展示所选时段各科目用时占比</div>
         </div>
 
         <div class="card">
@@ -120,23 +127,58 @@
                 <input type="text" id="mistakeNote" placeholder="错误原因">
                 <button id="addMistakeBtn">📌 添加错题</button>
             </div>
+            <!-- 筛选栏 -->
+            <div class="filter-group">
+                <div><strong>科目筛选（单选）</strong></div>
+                <div id="subjectFilter" class="row-flex">
+                    <label><input type="radio" name="filterSubject" value="all" checked> 全部</label>
+                    <label><input type="radio" name="filterSubject" value="言语理解"> 言语理解</label>
+                    <label><input type="radio" name="filterSubject" value="判断推理"> 判断推理</label>
+                    <label><input type="radio" name="filterSubject" value="资料分析"> 资料分析</label>
+                    <label><input type="radio" name="filterSubject" value="数量关系"> 数量关系</label>
+                    <label><input type="radio" name="filterSubject" value="政治理论"> 政治理论</label>
+                    <label><input type="radio" name="filterSubject" value="常识"> 常识</label>
+                    <label><input type="radio" name="filterSubject" value="申论"> 申论</label>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div><strong>错误原因筛选（多选）</strong></div>
+                <div id="reasonFilter" class="row-flex">
+                    <label><input type="checkbox" value="看错了"> 看错了</label>
+                    <label><input type="checkbox" value="粗心"> 粗心</label>
+                    <label><input type="checkbox" value="题干不理解"> 题干不理解</label>
+                    <label><input type="checkbox" value="数据找错了"> 数据找错了</label>
+                    <label><input type="checkbox" value="计算错误"> 计算错误</label>
+                    <label><input type="checkbox" value="题型判断错误"> 题型判断错误</label>
+                    <label><input type="checkbox" value="知识点未掌握"> 知识点未掌握</label>
+                    <label><input type="checkbox" value="词义理解错误"> 词义理解错误</label>
+                    <label><input type="checkbox" value="未能把握考点"> 未能把握考点</label>
+                </div>
+            </div>
+            <div class="row-flex" style="justify-content: space-between;">
+                <button id="applyFilter">🔍 应用筛选</button>
+                <button id="resetFilter">🔄 重置筛选</button>
+            </div>
             <div id="mistakeList"></div>
+            <div id="mistakePagination" class="pagination"></div>
         </div>
 
         <div class="card">
             <h2>📖 成语速查 · 测验背诵</h2>
             <input type="text" id="chengyuSearch" placeholder="搜索成语" onkeyup="filterChengyu()">
             <div class="row-flex">
-                <input type="text" id="newChengyu" placeholder="新成语">
-                <input type="text" id="newMeaning" placeholder="释义">
+                <input type="text" id="newChengyu" placeholder="新成语" style="flex:2">
+                <input type="text" id="newMeaning" placeholder="释义" style="flex:2">
                 <button id="addChengyuBtn">➕ 添加</button>
+                <button id="onlineSearchBtn">🔍 联网搜索释义</button>
             </div>
             <div id="chengyuList"></div>
+            <div id="chengyuPagination" class="pagination"></div>
             <div class="small-note">🔍 点击“联网释义”打开百度搜索；📝 点击“测验”进行选择题背诵，答对才增加次数</div>
         </div>
     </div>
 
-    <!-- 第三行：六大模块统计（含饼图） -->
+    <!-- 第三行：六大模块统计 -->
     <div class="grid">
         <div class="card">
             <h2>📈 六大模块刷题统计</h2>
@@ -150,7 +192,6 @@
                 <div id="moduleInputs"></div>
                 <button id="submitModuleData" style="margin-top:8px;">保存今日数据</button>
             </div>
-            <!-- 时段筛选器 -->
             <div class="stat-filter">
                 <button id="moduleStatDaily">今日</button>
                 <button id="moduleStatWeek">本周</button>
@@ -212,9 +253,8 @@
 
     // ======================== 全局变量 ========================
     const MODULES = ["言语理解", "判断推理", "资料分析", "数量关系", "政治理论", "常识"];
-    let dailyModulesData = [];    // [{ date, modules: { "言语理解":{correct,total} } }]
+    let dailyModulesData = [];
 
-    // 存储
     const STORAGE = {
         todos: 'gwy_todos',
         exams: 'gwy_exams',
@@ -242,7 +282,7 @@
             { word: "筚路蓝缕", meaning: "驾着柴车，穿着破衣去开辟山林。形容创业艰辛", review: 3 },
             { word: "孜孜不倦", meaning: "勤奋努力，不知疲倦", review: 5 },
             { word: "举一反三", meaning: "从一件事类推而知道许多事", review: 2 },
-            { word: "画蛇添足", meaning: "多此一举，弄巧成拙", review: 1 }
+            { word: "汗牛充栋", meaning: "形容书籍极多", review: 1 }
         ];
         countdowns = JSON.parse(localStorage.getItem(STORAGE.countdowns)) || [];
         let raw = JSON.parse(localStorage.getItem(STORAGE.dailyModules));
@@ -270,7 +310,7 @@
             `;
             container.appendChild(div);
         });
-        // 绑定计时事件（略，保留原有逻辑）
+        // 绑定计时事件
         document.querySelectorAll('.startTimerBtn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(btn.dataset.idx);
@@ -317,24 +357,36 @@
         });
     }
 
-    // TODO饼图：根据时间段筛选任务（基于创建时间？我们没有存储任务创建日期，只能统计所有任务的总用时。改进：每个任务增加createdDate字段。为了满足需求，我们可以在添加任务时记录日期，并在计时时累加。这里简单起见：给每个任务增加dateCreated字段。修改添加任务逻辑。
-    // 需要在addTask时记录当前日期。
-    // 并且修改renderTodos显示？不必要，统计时按日期过滤。
-    // 升级数据结构：todos每个任务加 createDate, totalTime。已有的任务默认createDate为今天。
-    function getDateFilteredTasks(startDate, endDate) {
-        // 返回在区间内的任务（按创建日期过滤）
-        return todos.filter(t => {
-            if (!t.createDate) return false; // 旧数据兼容: 如果无日期，归入今天
-            return t.createDate >= startDate && t.createDate <= endDate;
-        });
+    // TODO饼图相关
+    function getDateRange(type, startInput, endInput) {
+        let today = new Date();
+        if (type === 'today') {
+            let s = today.toISOString().slice(0,10);
+            return { start: s, end: s };
+        } else if (type === 'week') {
+            let day = today.getDay();
+            let diff = day === 0 ? 6 : day-1;
+            let mon = new Date(today.getTime() - diff*86400000);
+            let sun = new Date(mon.getTime() + 6*86400000);
+            return { start: mon.toISOString().slice(0,10), end: sun.toISOString().slice(0,10) };
+        } else if (type === 'month') {
+            let start = new Date(today.getFullYear(), today.getMonth(), 1);
+            let end = new Date(today.getFullYear(), today.getMonth()+1, 0);
+            return { start: start.toISOString().slice(0,10), end: end.toISOString().slice(0,10) };
+        } else if (type === 'custom') {
+            let s = startInput.value, e = endInput.value;
+            if (!s || !e) return null;
+            return { start: s, end: e };
+        }
+        return null;
     }
+
     let todoPieChart = null;
     function showTodoPieChart(startDateStr, endDateStr) {
         let filtered = todos.filter(t => {
             if (!t.createDate) return false;
             return t.createDate >= startDateStr && t.createDate <= endDateStr;
         });
-        // 按科目汇总totalTime
         let subjectTimes = {};
         filtered.forEach(t => {
             let sub = t.subject;
@@ -342,13 +394,13 @@
             subjectTimes[sub] = (subjectTimes[sub] || 0) + sec;
         });
         const labels = Object.keys(subjectTimes);
-        const data = labels.map(l => subjectTimes[l] / 60); // 分钟
+        const data = labels.map(l => subjectTimes[l] / 60);
         if (todoPieChart) todoPieChart.destroy();
         const ctx = document.getElementById('todoPieChart').getContext('2d');
         todoPieChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec489a','#14b8a6'] }] } });
     }
 
-    // ======================== 2. 套卷可视化（标签同步名称） ========================
+    // ======================== 2. 套卷可视化 ========================
     let chartExam = null;
     function updateExamChart() {
         const avg = examRecords.length ? (examRecords.reduce((sum, e) => sum + (e.correct/e.total)*100,0)/examRecords.length).toFixed(1) : 0;
@@ -369,26 +421,119 @@
         });
     }
 
-    // ======================== 3. 错题本 ========================
+    // ======================== 3. 错题本（分页 + 筛选 + 弹窗） ========================
+    let currentMistakePage = 1;
+    let filteredMistakes = [];
+    const MISTAKES_PER_PAGE = 3;
+
+    function getFilteredMistakes() {
+        let selectedSubject = document.querySelector('input[name="filterSubject"]:checked').value;
+        let selectedReasons = Array.from(document.querySelectorAll('#reasonFilter input:checked')).map(cb => cb.value);
+        let filtered = [...mistakes];
+        if (selectedSubject !== 'all') {
+            filtered = filtered.filter(m => m.category === selectedSubject);
+        }
+        if (selectedReasons.length > 0) {
+            filtered = filtered.filter(m => selectedReasons.includes(m.note));
+        }
+        return filtered;
+    }
+
     function renderMistakes() {
+        filteredMistakes = getFilteredMistakes();
+        const totalPages = Math.ceil(filteredMistakes.length / MISTAKES_PER_PAGE);
+        if (currentMistakePage > totalPages) currentMistakePage = Math.max(1, totalPages);
+        const start = (currentMistakePage - 1) * MISTAKES_PER_PAGE;
+        const pageMistakes = filteredMistakes.slice(start, start + MISTAKES_PER_PAGE);
+        
         const container = document.getElementById('mistakeList');
-        if(!container) return;
-        container.innerHTML = mistakes.map((m,i)=>`<div class="mistake-item">📌 ${m.category}：${m.text.substring(0,50)}<br>⚠️ ${m.note}<button class="delMistake" data-idx="${i}">删除</button></div>`).join('');
-        document.querySelectorAll('.delMistake').forEach(btn=>{
-            btn.addEventListener('click',()=>{
-                mistakes.splice(parseInt(btn.dataset.idx),1);
-                saveAll();
-                renderMistakes();
+        container.innerHTML = pageMistakes.map((m, idx) => `
+            <div class="mistake-item" data-mistake-idx="${start+idx}">
+                <div><strong>${m.category}</strong>：${m.text.substring(0,50)}${m.text.length>50?'…':''}<br>
+                <span class="badge">原因: ${m.note}</span> <span class="badge">${m.date}</span></div>
+                <button class="viewMistakeBtn" data-idx="${start+idx}">🔍 查看详情</button>
+                <button class="delMistakeBtn" data-idx="${start+idx}">🗑️ 删除</button>
+            </div>
+        `).join('');
+        if (pageMistakes.length === 0) container.innerHTML = '<div class="small-note">暂无错题</div>';
+        
+        // 分页控件
+        const paginationDiv = document.getElementById('mistakePagination');
+        if (totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+        } else {
+            let pagesHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pagesHtml += `<button class="page-btn ${i===currentMistakePage?'active':''}" data-page="${i}">${i}</button>`;
+            }
+            paginationDiv.innerHTML = `<button id="mistakePrevPage">◀ 上一页</button>${pagesHtml}<button id="mistakeNextPage">下一页 ▶</button>`;
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentMistakePage = parseInt(btn.dataset.page);
+                    renderMistakes();
+                });
+            });
+            document.getElementById('mistakePrevPage')?.addEventListener('click', () => {
+                if (currentMistakePage > 1) { currentMistakePage--; renderMistakes(); }
+            });
+            document.getElementById('mistakeNextPage')?.addEventListener('click', () => {
+                if (currentMistakePage < totalPages) { currentMistakePage++; renderMistakes(); }
+            });
+        }
+        
+        // 绑定查看详情按钮
+        document.querySelectorAll('.viewMistakeBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                const mistake = filteredMistakes[idx];
+                if (mistake) showMistakeDetail(mistake);
+            });
+        });
+        // 绑定删除按钮
+        document.querySelectorAll('.delMistakeBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                const realIdx = mistakes.findIndex(m => m === filteredMistakes[idx]);
+                if (realIdx !== -1) {
+                    mistakes.splice(realIdx, 1);
+                    saveAll();
+                    renderMistakes();
+                }
             });
         });
     }
 
-    // ======================== 4. 成语系统（联网释义 + 测验） ========================
+    function showMistakeDetail(mistake) {
+        const modal = document.createElement('div');
+        modal.className = 'mistake-modal';
+        modal.innerHTML = `
+            <div class="mistake-card">
+                <h3>📌 错题详情</h3>
+                <p><strong>科目：</strong> ${mistake.category}</p>
+                <p><strong>错误原因：</strong> ${mistake.note}</p>
+                <p><strong>日期：</strong> ${mistake.date}</p>
+                <div class="full-text"><strong>题目内容：</strong><br>${mistake.text.replace(/\n/g, '<br>')}</div>
+                <button id="closeMistakeModal">关闭</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.querySelector('#closeMistakeModal').addEventListener('click', () => modal.remove());
+    }
+
+    // ======================== 4. 成语系统（分页 + 联网搜索） ========================
+    let currentChengyuPage = 1;
+    const CHENGYU_PER_PAGE = 5;
+
     function renderChengyu() {
         const search = document.getElementById('chengyuSearch')?.value.toLowerCase() || '';
-        const filtered = chengyuList.filter(c=>c.word.includes(search) || c.meaning.includes(search));
+        let filtered = chengyuList.filter(c => c.word.includes(search) || c.meaning.includes(search));
+        const totalPages = Math.ceil(filtered.length / CHENGYU_PER_PAGE);
+        if (currentChengyuPage > totalPages) currentChengyuPage = Math.max(1, totalPages);
+        const start = (currentChengyuPage - 1) * CHENGYU_PER_PAGE;
+        const pageChengyu = filtered.slice(start, start + CHENGYU_PER_PAGE);
+        
         const container = document.getElementById('chengyuList');
-        container.innerHTML = filtered.map((c, idx) => `
+        container.innerHTML = pageChengyu.map((c, idx) => `
             <div class="chengyu-item">
                 <div><b>${c.word}</b> - ${c.meaning}<br>📖复习 ${c.review} 次</div>
                 <div class="row-flex">
@@ -397,7 +542,33 @@
                 </div>
             </div>
         `).join('');
-        // 联网释义：打开百度搜索
+        if (pageChengyu.length === 0) container.innerHTML = '<div class="small-note">暂无成语</div>';
+        
+        // 分页
+        const paginationDiv = document.getElementById('chengyuPagination');
+        if (totalPages <= 1) {
+            paginationDiv.innerHTML = '';
+        } else {
+            let pagesHtml = '';
+            for (let i = 1; i <= totalPages; i++) {
+                pagesHtml += `<button class="chengyu-page-btn ${i===currentChengyuPage?'active':''}" data-page="${i}">${i}</button>`;
+            }
+            paginationDiv.innerHTML = `<button id="chengyuPrevPage">◀ 上一页</button>${pagesHtml}<button id="chengyuNextPage">下一页 ▶</button>`;
+            document.querySelectorAll('.chengyu-page-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentChengyuPage = parseInt(btn.dataset.page);
+                    renderChengyu();
+                });
+            });
+            document.getElementById('chengyuPrevPage')?.addEventListener('click', () => {
+                if (currentChengyuPage > 1) { currentChengyuPage--; renderChengyu(); }
+            });
+            document.getElementById('chengyuNextPage')?.addEventListener('click', () => {
+                if (currentChengyuPage < totalPages) { currentChengyuPage++; renderChengyu(); }
+            });
+        }
+        
+        // 联网释义
         document.querySelectorAll('.searchMeaning').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 let word = btn.dataset.word;
@@ -414,17 +585,12 @@
             });
         });
     }
-    window.filterChengyu = () => renderChengyu();
 
-    // 生成干扰项（从其他成语随机取3个不同释义，且不与正确释义相同）
     function getRandomDistractors(correctMeaning, excludeWord) {
         let candidates = chengyuList.filter(c => c.word !== excludeWord && c.meaning !== correctMeaning);
         if (candidates.length < 3) {
-            // 补充默认干扰
-            let defaults = ["多此一举", "胡乱猜测", "毫无根据", "自相矛盾"];
-            return defaults.slice(0,3);
+            return ["多此一举", "胡乱猜测", "毫无根据"];
         }
-        // 随机取3个
         let shuffled = [...candidates];
         for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -436,12 +602,10 @@
     function startQuiz(word, correctMeaning, chengyuIdx) {
         let distractors = getRandomDistractors(correctMeaning, word);
         let options = [correctMeaning, ...distractors];
-        // 随机打乱顺序
         for (let i = options.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [options[i], options[j]] = [options[j], options[i]];
         }
-        // 创建模态框
         const modal = document.createElement('div');
         modal.className = 'quiz-modal';
         modal.innerHTML = `
@@ -458,7 +622,6 @@
             div.addEventListener('click', () => {
                 const selected = div.dataset.opt;
                 if (selected === correctMeaning) {
-                    // 正确，增加背诵次数
                     chengyuList[chengyuIdx].review += 1;
                     saveAll();
                     renderChengyu();
@@ -473,7 +636,7 @@
         modal.querySelector('#closeQuiz').addEventListener('click', () => modal.remove());
     }
 
-    // ======================== 5. 六大模块统计（饼图+折线） ========================
+    // ======================== 5. 六大模块统计 ========================
     function renderModuleOverview() {
         let moduleStats = {};
         MODULES.forEach(m => { moduleStats[m] = { totalCorrect: 0, totalCount: 0 }; });
@@ -530,7 +693,6 @@
         modulePieChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec489a'] }] } });
     }
 
-    // 记录模块数据 UI
     function showModuleInput() {
         const area = document.getElementById('moduleInputArea');
         const inputsDiv = document.getElementById('moduleInputs');
@@ -597,7 +759,6 @@
         });
     }
 
-    // ======================== 课程推荐 ========================
     function loadCourses() {
         const courses = {
             基础阶段: ['粉笔980系统课', '刘文超数量资料', '李梦娇常识'],
@@ -611,7 +772,7 @@
         document.getElementById('courseList').innerHTML = html;
     }
 
-    // ======================== OCR ========================
+    // OCR
     async function performOCR(file) {
         const statusDiv = document.getElementById('ocrStatus');
         statusDiv.innerHTML = '⏳ OCR识别中...';
@@ -633,7 +794,7 @@
         });
     }
 
-    // ======================== 初始化所有 ========================
+    // ======================== 初始化 ========================
     function initAllFunctions() {
         loadData();
         renderTodos();
@@ -646,7 +807,7 @@
         renderModuleOverview();
         renderModuleLineChart();
 
-        // 添加任务时自动记录创建日期
+        // 添加任务（记录创建日期）
         document.getElementById('addTaskBtn').onclick = () => {
             const name = document.getElementById('taskName').value.trim();
             if(!name) return alert('请输入任务名称');
@@ -666,8 +827,12 @@
         document.getElementById('addMistakeBtn').onclick = () => {
             let text = document.getElementById('ocrText').value.trim();
             if(!text) return alert('请先识别或输入题目');
-            mistakes.unshift({ text, category: document.getElementById('mistakeCategory').value, note: document.getElementById('mistakeNote').value.trim()||'未填', date: new Date().toLocaleDateString() });
-            saveAll(); renderMistakes();
+            let category = document.getElementById('mistakeCategory').value;
+            let note = document.getElementById('mistakeNote').value.trim();
+            if(!note) return alert('请填写错误原因');
+            mistakes.unshift({ text, category, note, date: new Date().toLocaleDateString() });
+            saveAll();
+            renderMistakes();
             document.getElementById('ocrText').value = ''; document.getElementById('mistakeNote').value = '';
         };
         document.getElementById('addChengyuBtn').onclick = () => {
@@ -677,6 +842,12 @@
             chengyuList.push({ word:w, meaning:m, review:0 });
             saveAll(); renderChengyu();
             document.getElementById('newChengyu').value=''; document.getElementById('newMeaning').value='';
+        };
+        // 联网搜索释义按钮（新成语区域）
+        document.getElementById('onlineSearchBtn').onclick = () => {
+            let word = document.getElementById('newChengyu').value.trim();
+            if (!word) { alert('请先输入成语'); return; }
+            window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(word + ' 成语 释义')}`, '_blank');
         };
         document.getElementById('addExamCountdown').onclick = () => {
             let name = document.getElementById('examNameInput').value.trim();
@@ -697,49 +868,38 @@
             else document.getElementById('compareResult').innerHTML = `📌 不一致。你的长度${my.length}字，参考${ref.length}字。`;
         };
 
-        // 模块统计按钮
+        // 模块统计
         document.getElementById('recordModuleBtn').onclick = showModuleInput;
         document.getElementById('hideModuleInput').onclick = () => { document.getElementById('moduleInputArea').style.display = 'none'; };
         document.getElementById('submitModuleData').onclick = submitModuleData;
 
-        // 饼图时段选择
-        function getDateRange(type, startInput, endInput) {
-            let today = new Date();
-            if (type === 'today') {
-                let s = today.toISOString().slice(0,10);
-                return { start: s, end: s };
-            } else if (type === 'week') {
-                let day = today.getDay();
-                let diff = day === 0 ? 6 : day-1;
-                let mon = new Date(today.getTime() - diff*86400000);
-                let sun = new Date(mon.getTime() + 6*86400000);
-                return { start: mon.toISOString().slice(0,10), end: sun.toISOString().slice(0,10) };
-            } else if (type === 'month') {
-                let start = new Date(today.getFullYear(), today.getMonth(), 1);
-                let end = new Date(today.getFullYear(), today.getMonth()+1, 0);
-                return { start: start.toISOString().slice(0,10), end: end.toISOString().slice(0,10) };
-            } else if (type === 'custom') {
-                let s = startInput.value, e = endInput.value;
-                if (!s || !e) return null;
-                return { start: s, end: e };
-            }
-            return null;
-        }
-        // TODO饼图事件
+        // 筛选按钮
+        document.getElementById('applyFilter').onclick = () => {
+            currentMistakePage = 1;
+            renderMistakes();
+        };
+        document.getElementById('resetFilter').onclick = () => {
+            document.querySelector('input[name="filterSubject"][value="all"]').checked = true;
+            document.querySelectorAll('#reasonFilter input').forEach(cb => cb.checked = false);
+            currentMistakePage = 1;
+            renderMistakes();
+        };
+
+        // TODO饼图
         const todoStart = document.getElementById('todoStatStart'), todoEnd = document.getElementById('todoStatEnd');
         document.getElementById('todoStatDaily').onclick = () => { let r = getDateRange('today'); if(r) showTodoPieChart(r.start, r.end); };
         document.getElementById('todoStatWeek').onclick = () => { let r = getDateRange('week'); if(r) showTodoPieChart(r.start, r.end); };
         document.getElementById('todoStatMonth').onclick = () => { let r = getDateRange('month'); if(r) showTodoPieChart(r.start, r.end); };
         document.getElementById('todoStatCustom').onclick = () => { let r = getDateRange('custom', todoStart, todoEnd); if(r) showTodoPieChart(r.start, r.end); else alert('请选择起止日期'); };
         document.getElementById('todoStatShow').onclick = () => { let r = getDateRange('custom', todoStart, todoEnd); if(r) showTodoPieChart(r.start, r.end); else alert('请先选择日期范围'); };
-        // 模块饼图事件
+        // 模块饼图
         const modStart = document.getElementById('moduleStatStart'), modEnd = document.getElementById('moduleStatEnd');
         document.getElementById('moduleStatDaily').onclick = () => { let r = getDateRange('today'); if(r) showModulePieChart(r.start, r.end); };
         document.getElementById('moduleStatWeek').onclick = () => { let r = getDateRange('week'); if(r) showModulePieChart(r.start, r.end); };
         document.getElementById('moduleStatMonth').onclick = () => { let r = getDateRange('month'); if(r) showModulePieChart(r.start, r.end); };
         document.getElementById('moduleStatCustom').onclick = () => { let r = getDateRange('custom', modStart, modEnd); if(r) showModulePieChart(r.start, r.end); else alert('请选择起止日期'); };
         document.getElementById('moduleStatShow').onclick = () => { let r = getDateRange('custom', modStart, modEnd); if(r) showModulePieChart(r.start, r.end); else alert('请先选择日期范围'); };
-        // 默认显示今日饼图
+        
         let todayRange = getDateRange('today');
         if(todayRange) showTodoPieChart(todayRange.start, todayRange.end);
         if(todayRange) showModulePieChart(todayRange.start, todayRange.end);
