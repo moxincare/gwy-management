@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WaytoGWY 备考系统</title>
+    <title>WaytoGWY 备考系统（增强版）</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
@@ -28,6 +28,7 @@
         .quiz-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .quiz-card { background:white; border-radius:32px; padding:24px; max-width:500px; width:90%; }
         .quiz-option { margin:12px 0; padding:10px; background:#f1f5f9; border-radius:40px; cursor:pointer; text-align:center; }
+        .click-hint { font-size: 0.7rem; color: #3b82f6; margin-left: 8px; cursor: help; }
     </style>
 </head>
 <body>
@@ -56,7 +57,7 @@
     <!-- 套卷分析 -->
     <div id="examPanel" class="panel active">
         <div class="card">
-            <h2>📊 套卷分析（支持小题型）</h2>
+            <h2>📊 套卷分析（支持小题型） <span class="click-hint">💡 单击套卷展开/折叠小题型表格</span></h2>
             <p>总平均正确率 <strong id="avgAccuracy">--</strong> %</p>
             <canvas id="examChart" height="180"></canvas>
             <div class="row-flex">
@@ -69,6 +70,7 @@
                 <button id="hideSubForm">取消</button>
             </div>
             <div id="examList"></div>
+            <div class="small-note">📌 每套卷可记录六个题型的正确/总数，单击列表中的套卷查看各题型正确率。</div>
         </div>
     </div>
 
@@ -92,6 +94,7 @@
                 <button id="todoMonth">本月饼图</button>
             </div>
             <canvas id="todoPieChart" height="180"></canvas>
+            <div class="small-note">📊 饼图显示所选时段内各科目专注时长占比（分钟）。</div>
         </div>
     </div>
 
@@ -117,14 +120,18 @@
     <!-- 成语 -->
     <div id="chengyuPanel" class="panel">
         <div class="card">
-            <h2>📖 成语速查+测验</h2>
-            <input type="text" id="chengyuSearch" placeholder="搜索成语" onkeyup="filterChengyu()">
+            <h2>📖 成语速查 + 测验 + 联网释义</h2>
             <div class="row-flex">
-                <input type="text" id="newWord" placeholder="新成语">
-                <input type="text" id="newMeaning" placeholder="释义">
-                <button id="addChengyu">添加</button>
+                <input type="text" id="newWord" placeholder="新成语" style="flex:2">
+                <button id="fetchMeaningBtn">🔍 联网搜索释义</button>
             </div>
+            <div class="row-flex">
+                <input type="text" id="newMeaning" placeholder="释义（可手动填或从搜索结果复制）" style="flex:2">
+                <button id="addChengyu">添加成语</button>
+            </div>
+            <input type="text" id="chengyuSearch" placeholder="搜索已有成语" onkeyup="filterChengyu()">
             <div id="chengyuList"></div>
+            <div class="small-note">📌 新成语：输入成语后点击“联网搜索释义”会打开百度，复制释义后粘贴到释义框再添加。已有成语右侧提供测验和百度搜索按钮。</div>
         </div>
     </div>
 
@@ -132,19 +139,20 @@
     <div id="modulePanel" class="panel">
         <div class="card">
             <h2>📈 六大模块刷题统计</h2>
-            <div id="moduleOverview" class="row-flex" style="justify-content:space-between;"></div>
+            <div id="moduleOverview" class="row-flex" style="justify-content:space-between; flex-wrap:wrap;"></div>
             <div class="row-flex">
                 <input type="date" id="moduleDate">
                 <button id="recordModule">记录今日数据</button>
             </div>
             <div id="moduleInputArea" style="display:none; background:#f8fafc; padding:12px; border-radius:20px;"></div>
             <div class="row-flex">
-                <button id="moduleToday">今日饼图</button>
+                <button id="moduleToday">今日饼图（正确题数占比）</button>
                 <button id="moduleWeek">本周饼图</button>
                 <button id="moduleMonth">本月饼图</button>
             </div>
             <canvas id="modulePieChart" height="180"></canvas>
             <canvas id="moduleLineChart" height="180"></canvas>
+            <div class="small-note">📊 折线图：各模块正确率变化；饼图：各模块正确题数占总正确题数的比例。</div>
         </div>
     </div>
 
@@ -266,12 +274,16 @@
                         </div>
                     </div>`;
         }).join('');
+        // 单击展开/折叠
         document.querySelectorAll('.exam-item').forEach(el => {
             el.onclick = (e) => {
                 if (e.target.classList.contains('editExam')) return;
                 let detail = el.querySelector('.sub-detail');
                 if (detail) detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
             };
+            // 默认折叠
+            let detail = el.querySelector('.sub-detail');
+            if (detail) detail.style.display = 'none';
         });
         document.querySelectorAll('.editExam').forEach(btn => {
             btn.onclick = (e) => {
@@ -418,6 +430,11 @@
         let data = labels.map(l => subjectSec[l] / 60);
         if (todoPieChart) todoPieChart.destroy();
         let ctx = document.getElementById('todoPieChart').getContext('2d');
+        if (labels.length === 0) {
+            ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+            ctx.fillText('暂无数据', 10, 50);
+            return;
+        }
         todoPieChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data }] } });
     }
 
@@ -462,12 +479,12 @@
             <div class="chengyu-item">
                 <div><b>${c.word}</b> - ${c.meaning}<br>复习 ${c.review} 次</div>
                 <div class="row-flex">
-                    <button class="searchNet" data-word="${c.word}">🔍 联网释义</button>
+                    <button class="searchNet" data-word="${c.word}">🔍 联网搜索</button>
                     <button class="quizBtn" data-word="${c.word}" data-meaning="${c.meaning}" data-idx="${chengyuList.findIndex(cc=>cc.word===c.word)}">📝 测验</button>
                 </div>
             </div>
         `).join('');
-        document.querySelectorAll('.searchNet').forEach(btn => btn.onclick = () => window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(btn.dataset.word+' 成语')}`));
+        document.querySelectorAll('.searchNet').forEach(btn => btn.onclick = () => window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(btn.dataset.word+' 成语 释义')}`));
         document.querySelectorAll('.quizBtn').forEach(btn => btn.onclick = () => startQuiz(btn.dataset.word, btn.dataset.meaning, parseInt(btn.dataset.idx)));
     }
     window.filterChengyu = () => renderChengyu();
@@ -539,18 +556,28 @@
     let modulePieChart = null;
     function showModulePie(start, end) {
         let filtered = modulesData.filter(d => d.date >= start && d.date <= end);
-        let totalByMod = {};
-        MODULES.forEach(m => totalByMod[m] = 0);
+        // 计算各模块正确题数总和
+        let correctCounts = {};
+        MODULES.forEach(m => correctCounts[m] = 0);
+        let totalCorrectAll = 0;
         filtered.forEach(day => {
             MODULES.forEach(mod => {
                 let rec = day[mod];
-                if (rec && rec.t) totalByMod[mod] += rec.t;
+                if (rec && rec.c) {
+                    correctCounts[mod] += rec.c;
+                    totalCorrectAll += rec.c;
+                }
             });
         });
-        let labels = MODULES.filter(m => totalByMod[m] > 0);
-        let data = labels.map(m => totalByMod[m]);
+        let labels = MODULES.filter(m => correctCounts[m] > 0);
+        let data = labels.map(m => correctCounts[m]);
         if (modulePieChart) modulePieChart.destroy();
         let ctx = document.getElementById('modulePieChart').getContext('2d');
+        if (labels.length === 0) {
+            ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+            ctx.fillText('暂无数据', 10, 50);
+            return;
+        }
         modulePieChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data }] } });
     }
 
@@ -607,7 +634,6 @@
         document.getElementById('courseList').innerHTML = html;
     }
 
-    // 辅助日期范围
     function getDateRange(type) {
         let today = new Date();
         if (type === 'today') { let s = today.toISOString().slice(0,10); return { start: s, end: s }; }
@@ -662,10 +688,16 @@
             document.getElementById('ocrText').value = '';
             document.getElementById('mistakeNote').value = '';
         };
+        // 新成语联网搜索
+        document.getElementById('fetchMeaningBtn').onclick = () => {
+            let word = document.getElementById('newWord').value.trim();
+            if (!word) { alert('请先输入成语'); return; }
+            window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(word + ' 成语 释义')}`, '_blank');
+        };
         document.getElementById('addChengyu').onclick = () => {
             let w = document.getElementById('newWord').value.trim();
             let m = document.getElementById('newMeaning').value.trim();
-            if (!w || !m) return alert('填写完整');
+            if (!w || !m) return alert('请填写成语和释义（可从搜索结果复制）');
             chengyuList.push({ word: w, meaning: m, review: 0 });
             saveAll();
             renderChengyu();
@@ -687,6 +719,7 @@
             else document.getElementById('compareResult').innerHTML = '📌 不一致，请对照要点修改';
         };
         document.getElementById('recordModule').onclick = showModuleInput;
+        // 饼图事件
         document.getElementById('todoToday').onclick = () => { let r = getDateRange('today'); if(r) showTodoPie(r.start, r.end); };
         document.getElementById('todoWeek').onclick = () => { let r = getDateRange('week'); if(r) showTodoPie(r.start, r.end); };
         document.getElementById('todoMonth').onclick = () => { let r = getDateRange('month'); if(r) showTodoPie(r.start, r.end); };
@@ -706,8 +739,10 @@
         });
         // 默认显示今日饼图
         let todayRange = getDateRange('today');
-        if (todayRange) showTodoPie(todayRange.start, todayRange.end);
-        if (todayRange) showModulePie(todayRange.start, todayRange.end);
+        if (todayRange) {
+            showTodoPie(todayRange.start, todayRange.end);
+            showModulePie(todayRange.start, todayRange.end);
+        }
     }
 </script>
 </body>
