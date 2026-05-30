@@ -3,301 +3,255 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>WaytoGWY 豪华备考管理系统</title>
+    <title>WaytoGWY 豪华备考系统 - 六大模块+饼图+测验</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            background: #f0f2f5;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            padding: 20px;
-            color: #1e293b;
-        }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-        .sub {
-            color: #475569;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #3b82f6;
-            padding-left: 12px;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-        .card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            padding: 1.2rem 1.5rem;
-            transition: all 0.2s;
-            border: 1px solid #e2e8f0;
-        }
-        .card h2 {
-            font-size: 1.4rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            border-left: 4px solid #3b82f6;
-            padding-left: 12px;
-        }
-        .card h3 {
-            font-size: 1.1rem;
-            margin: 0.8rem 0 0.5rem;
-            color: #0f172a;
-        }
-        button, .btn-like {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: 500;
-        }
-        button:hover {
-            background: #2563eb;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 8px 12px;
-            margin: 6px 0;
-            border: 1px solid #cbd5e1;
-            border-radius: 16px;
-            font-size: 0.9rem;
-        }
-        .task-item, .mistake-item, .chengyu-item, .daily-item {
-            background: #f8fafc;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        .badge {
-            background: #e2e8f0;
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-        }
-        .timer {
-            font-family: monospace;
-            font-weight: bold;
-            background: #1e293b;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 20px;
-        }
-        .row-flex {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        canvas {
-            max-height: 200px;
-            width: 100%;
-        }
-        hr {
-            margin: 16px 0;
-        }
-        .small-note {
-            font-size: 0.75rem;
-            color: #64748b;
-            margin-top: 8px;
-        }
-        @media (max-width: 700px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            body {
-                padding: 12px;
-            }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f0f2f5; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 20px; color: #1e293b; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+        .sub { color: #475569; margin-bottom: 1.5rem; border-left: 4px solid #3b82f6; padding-left: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 30px; }
+        .card { background: white; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 1.2rem 1.5rem; border: 1px solid #e2e8f0; }
+        .card h2 { font-size: 1.4rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; border-left: 4px solid #3b82f6; padding-left: 12px; }
+        .card h3 { font-size: 1.1rem; margin: 0.8rem 0 0.5rem; color: #0f172a; }
+        button, .btn-like { background: #3b82f6; color: white; border: none; padding: 6px 14px; border-radius: 40px; font-size: 0.85rem; cursor: pointer; transition: 0.2s; font-weight: 500; }
+        button:hover { background: #2563eb; }
+        input, select, textarea { width: 100%; padding: 8px 12px; margin: 6px 0; border: 1px solid #cbd5e1; border-radius: 16px; font-size: 0.9rem; }
+        .task-item, .mistake-item, .chengyu-item, .module-item { background: #f8fafc; margin: 8px 0; padding: 10px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .badge { background: #e2e8f0; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; }
+        .timer { font-family: monospace; font-weight: bold; background: #1e293b; color: white; padding: 4px 8px; border-radius: 20px; }
+        .row-flex { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        canvas { max-height: 200px; width: 100%; }
+        hr { margin: 16px 0; }
+        .small-note { font-size: 0.75rem; color: #64748b; margin-top: 8px; }
+        .module-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 12px; margin-bottom: 16px; }
+        .module-card { background: #f1f5f9; border-radius: 20px; padding: 8px 12px; text-align: center; }
+        .module-card .name { font-weight: bold; }
+        .module-card .accuracy { font-size: 1.2rem; font-weight: bold; color: #3b82f6; }
+        .quiz-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10001; }
+        .quiz-card { background: white; border-radius: 32px; padding: 24px; max-width: 500px; width: 90%; }
+        .quiz-option { margin: 12px 0; padding: 10px; background: #f1f5f9; border-radius: 40px; cursor: pointer; text-align: center; }
+        .quiz-option:hover { background: #e2e8f0; }
+        @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } body { padding: 12px; } }
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f0f2f5; display: flex; justify-content: center; align-items: center; z-index: 10000; backdrop-filter: blur(4px); }
+        .lock-card { background: white; border-radius: 32px; padding: 2rem; text-align: center; box-shadow: 0 20px 35px -8px rgba(0,0,0,0.2); width: 300px; }
+        .lock-card input { margin: 20px 0; text-align: center; font-size: 1.2rem; }
+        .error-msg { color: #dc2626; font-size: 0.8rem; margin-top: 8px; }
+        #mainContent { display: none; }
+        .ocr-status { font-size: 0.8rem; margin-top: 5px; color: #2563eb; }
+        .stat-filter { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; align-items: center; }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>🎯 WaytoGWY 豪华备考系统 <span style="font-size:0.9rem;">✨ Todo+复盘+错题+成语+倒计时</span></h1>
-    <div class="sub">📸 拍照上传AI模拟 · 手动录入一样强大 · 数据自动保存本地</div>
+<div id="lockScreen">
+    <div class="lock-card">
+        <h2>🔒 备考系统已加密</h2>
+        <p>请输入访问密码</p>
+        <input type="password" id="passwordInput" placeholder="密码" autocomplete="off">
+        <button id="unlockBtn">解锁</button>
+        <div id="lockError" class="error-msg"></div>
+        <div class="small-note" style="margin-top: 16px;">提示：默认密码 gwy2026</div>
+    </div>
+</div>
 
+<div id="mainContent">
+<div class="container">
+    <h1>🎯 WaytoGWY 豪华备考系统 <span style="font-size:0.9rem;">✨ 饼图统计+成语测验</span></h1>
+    <div class="sub">📸 六大模块 · 真实OCR · 分时段统计 · 选择题背诵</div>
+
+    <!-- 第一行：TODO + 套卷 -->
     <div class="grid">
-        <!-- 左侧: Todo 计划 + 计时器 -->
         <div class="card">
             <h2>✅ Todo 计划（支持计时）</h2>
             <div class="row-flex">
-                <input type="text" id="taskName" placeholder="任务名称，例：资料分析刷题" style="flex:2">
+                <input type="text" id="taskName" placeholder="任务名称" style="flex:2">
                 <select id="taskSubject">
                     <option>言语理解</option><option>判断推理</option><option>资料分析</option>
-                    <option>数量关系</option><option>常识</option><option>申论</option>
+                    <option>数量关系</option><option>政治理论</option><option>常识</option><option>申论</option>
                 </select>
-                <button id="addTaskBtn">➕ 添加任务</button>
+                <button id="addTaskBtn">➕ 添加</button>
             </div>
             <div id="todoList"></div>
-            <div class="small-note">⏱️ 点击“开始计时”记录专注时长，完成后自动计入统计</div>
+            <hr>
+            <div class="stat-filter">
+                <button id="todoStatDaily">今日</button>
+                <button id="todoStatWeek">本周</button>
+                <button id="todoStatMonth">本月</button>
+                <input type="date" id="todoStatStart"> 至 <input type="date" id="todoStatEnd">
+                <button id="todoStatCustom">自定义</button>
+                <button id="todoStatShow">📊 查看饼图</button>
+            </div>
+            <canvas id="todoPieChart" height="180" style="max-height:180px"></canvas>
+            <div class="small-note">⏱️ 点击任务“开始计时”记录专注时长，饼图展示所选时段各科目用时占比</div>
         </div>
 
-        <!-- 右侧: 套卷可视化复盘（上传各板块正确数） -->
         <div class="card">
             <h2>📊 套卷可视化分析</h2>
             <p>平均正确率 <strong id="avgAccuracy">--</strong> %</p>
-            <canvas id="accuracyChart" width="400" height="180" style="max-height:180px"></canvas>
-            <h3>➕ 录入套卷数据</h3>
+            <canvas id="accuracyChart" height="180"></canvas>
+            <h3>➕ 录入套卷</h3>
             <div class="row-flex">
-                <input type="text" id="examName" placeholder="套卷名称, 如2026国考">
-                <input type="number" id="correctNum" placeholder="正确题数" style="width:100px">
+                <input type="text" id="examName" placeholder="套卷名称">
+                <input type="number" id="correctNum" placeholder="正确数" style="width:100px">
                 <input type="number" id="totalNum" placeholder="总题数" style="width:100px">
                 <button id="addExamBtn">录入</button>
             </div>
-            <div id="examRecords" style="max-height:150px; overflow-y:auto; margin-top:10px;"></div>
-            <div class="small-note">💡 自动计算正确率并绘制趋势图</div>
+            <div id="examRecords" style="max-height:150px; overflow-y:auto;"></div>
         </div>
     </div>
 
+    <!-- 第二行：错题本 + 成语 -->
     <div class="grid">
-        <!-- 错题集（AI拍照模拟分类） -->
         <div class="card">
-            <h2>📸 错题本 · AI拍照分类</h2>
+            <h2>📸 错题本 · 真实OCR识别</h2>
             <div class="row-flex">
                 <input type="file" id="mistakePhoto" accept="image/*" style="flex:1">
-                <button id="simulateAI">🤖 模拟AI识别</button>
+                <button id="realOcrBtn">📷 开始OCR</button>
             </div>
-            <textarea id="aiRawText" rows="2" placeholder="AI识别出的题目文本将显示在这里... 你可以手动修改"></textarea>
+            <div id="ocrStatus" class="ocr-status"></div>
+            <textarea id="ocrText" rows="2" placeholder="识别出的文字..."></textarea>
             <select id="mistakeCategory">
                 <option>言语理解</option><option>判断推理</option><option>资料分析</option>
-                <option>数量关系</option><option>常识</option><option>申论</option>
+                <option>数量关系</option><option>政治理论</option><option>常识</option><option>申论</option>
             </select>
             <div class="row-flex">
-                <input type="text" id="mistakeNote" placeholder="错误原因/知识点">
-                <button id="addMistakeBtn">📌 添加到错题本</button>
+                <input type="text" id="mistakeNote" placeholder="错误原因">
+                <button id="addMistakeBtn">📌 添加错题</button>
             </div>
             <div id="mistakeList"></div>
-            <div class="small-note">📷 拍照后点击“模拟AI识别”会随机生成示例文本，你可以改成真实题目。</div>
         </div>
 
-        <!-- 成语速查与背诵 -->
         <div class="card">
-            <h2>📖 成语速查 · 背诵系统</h2>
+            <h2>📖 成语速查 · 测验背诵</h2>
             <input type="text" id="chengyuSearch" placeholder="搜索成语" onkeyup="filterChengyu()">
             <div class="row-flex">
                 <input type="text" id="newChengyu" placeholder="新成语">
                 <input type="text" id="newMeaning" placeholder="释义">
-                <button id="addChengyuBtn">➕ 添加成语</button>
+                <button id="addChengyuBtn">➕ 添加</button>
             </div>
             <div id="chengyuList"></div>
-            <div class="small-note">⭐ 点击“背诵+1”增加复习次数，次数越高越熟练</div>
+            <div class="small-note">🔍 点击“联网释义”打开百度搜索；📝 点击“测验”进行选择题背诵，答对才增加次数</div>
         </div>
     </div>
 
+    <!-- 第三行：六大模块统计（含饼图） -->
     <div class="grid">
-        <!-- 日常刷题统计 + 考试倒计时 -->
         <div class="card">
-            <h2>📈 日常刷题数据统计</h2>
-            <div class="row-flex">
-                <input type="date" id="dailyDate">
-                <input type="number" id="dailyCorrect" placeholder="正确数">
-                <input type="number" id="dailyTotal" placeholder="总题数">
-                <button id="addDailyBtn">记录</button>
+            <h2>📈 六大模块刷题统计</h2>
+            <div class="module-stats" id="moduleOverview"></div>
+            <div class="row-flex" style="margin-bottom: 12px;">
+                <input type="date" id="moduleDate" style="flex:1">
+                <button id="recordModuleBtn">📝 记录今日各模块数据</button>
             </div>
-            <canvas id="dailyChart" style="max-height:180px"></canvas>
-            <div id="dailyStats"></div>
+            <div id="moduleInputArea" style="background:#f8fafc; border-radius:20px; padding:12px; margin-bottom:12px; display:none;">
+                <div class="row-flex"><strong>按模块填写今日刷题情况</strong><button id="hideModuleInput" style="background:#94a3b8;">收起</button></div>
+                <div id="moduleInputs"></div>
+                <button id="submitModuleData" style="margin-top:8px;">保存今日数据</button>
+            </div>
+            <!-- 时段筛选器 -->
+            <div class="stat-filter">
+                <button id="moduleStatDaily">今日</button>
+                <button id="moduleStatWeek">本周</button>
+                <button id="moduleStatMonth">本月</button>
+                <input type="date" id="moduleStatStart"> 至 <input type="date" id="moduleStatEnd">
+                <button id="moduleStatCustom">自定义</button>
+                <button id="moduleStatShow">🥧 饼图(题量占比)</button>
+            </div>
+            <canvas id="modulePieChart" height="180" style="max-height:180px"></canvas>
+            <canvas id="moduleChart" height="180" style="margin-top:16px;"></canvas>
+            <div class="small-note">折线图：各模块正确率变化；饼图：所选时段各模块刷题总数占比</div>
         </div>
 
         <div class="card">
             <h2>⏰ 考试倒计时</h2>
             <div class="row-flex">
-                <input type="text" id="examNameInput" placeholder="考试名称，例：2027国考">
+                <input type="text" id="examNameInput" placeholder="考试名称">
                 <input type="date" id="examDate">
-                <button id="addExamCountdown">添加考试</button>
+                <button id="addExamCountdown">添加</button>
             </div>
             <div id="countdownList"></div>
-            <div class="small-note">📌 支持多个考试同时倒计时，自动保存</div>
             <hr>
             <h3>🔗 公告链接提取（模拟）</h3>
             <input type="text" id="announceLink" placeholder="粘贴公告链接">
-            <button id="extractBtn">一键提取时间节点</button>
-            <div id="extractResult" class="small-note" style="background:#f1f5f9; padding:8px; border-radius:16px;"></div>
+            <button id="extractBtn">一键提取</button>
+            <div id="extractResult" class="small-note"></div>
         </div>
     </div>
 
     <div class="grid">
-        <!-- 课程推荐 + 申论答案对比 -->
         <div class="card">
             <h2>🎓 社区课程推荐</h2>
-            <div id="courseList" style="display:flex; flex-direction:column; gap:8px;">
-                <!-- 动态js生成 -->
-            </div>
+            <div id="courseList"></div>
         </div>
         <div class="card">
             <h2>📑 申论答案对比</h2>
-            <textarea id="myAnswer" rows="3" placeholder="你的答案"></textarea>
-            <textarea id="refAnswer" rows="3" placeholder="参考答案"></textarea>
+            <textarea id="myAnswer" rows="2" placeholder="你的答案"></textarea>
+            <textarea id="refAnswer" rows="2" placeholder="参考答案"></textarea>
             <button id="compareAnswer">对比差异</button>
-            <div id="compareResult" style="background:#f8fafc; border-radius:16px; padding:10px; margin-top:8px; white-space:pre-wrap;"></div>
+            <div id="compareResult" class="small-note"></div>
         </div>
     </div>
 </div>
+</div>
 
 <script>
-    // ---------- 数据存储 key ----------
+    // ======================== 密码锁 ========================
+    const CORRECT_PASSWORD = "gwy2026";
+    document.getElementById('unlockBtn').addEventListener('click', function() {
+        if (document.getElementById('passwordInput').value === CORRECT_PASSWORD) {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            initAllFunctions();
+        } else {
+            document.getElementById('lockError').innerText = '密码错误';
+        }
+    });
+    document.getElementById('passwordInput').addEventListener('keypress', e => { if(e.key === 'Enter') document.getElementById('unlockBtn').click(); });
+
+    // ======================== 全局变量 ========================
+    const MODULES = ["言语理解", "判断推理", "资料分析", "数量关系", "政治理论", "常识"];
+    let dailyModulesData = [];    // [{ date, modules: { "言语理解":{correct,total} } }]
+
+    // 存储
     const STORAGE = {
         todos: 'gwy_todos',
-        exams: 'gwy_exams',      // 套卷记录
+        exams: 'gwy_exams',
         mistakes: 'gwy_mistakes',
         chengyu: 'gwy_chengyu',
-        daily: 'gwy_daily',
+        dailyModules: 'gwy_daily_modules',
         countdowns: 'gwy_countdowns'
     };
+    let todos = [], examRecords = [], mistakes = [], chengyuList = [], countdowns = [];
 
-    // 初始化默认数据
-    let todos = JSON.parse(localStorage.getItem(STORAGE.todos)) || [];
-    let examRecords = JSON.parse(localStorage.getItem(STORAGE.exams)) || [];
-    let mistakes = JSON.parse(localStorage.getItem(STORAGE.mistakes)) || [];
-    let chengyuList = JSON.parse(localStorage.getItem(STORAGE.chengyu)) || [
-        { word: "筚路蓝缕", meaning: "驾着柴车，穿着破衣去开辟山林。形容创业艰辛", review: 3 },
-        { word: "孜孜不倦", meaning: "勤奋努力，不知疲倦", review: 5 },
-        { word: "举一反三", meaning: "从一件事类推而知道许多事", review: 2 }
-    ];
-    let dailyData = JSON.parse(localStorage.getItem(STORAGE.daily)) || [];
-    let countdowns = JSON.parse(localStorage.getItem(STORAGE.countdowns)) || [];
-
-    // 辅助保存
     function saveAll() {
         localStorage.setItem(STORAGE.todos, JSON.stringify(todos));
         localStorage.setItem(STORAGE.exams, JSON.stringify(examRecords));
         localStorage.setItem(STORAGE.mistakes, JSON.stringify(mistakes));
         localStorage.setItem(STORAGE.chengyu, JSON.stringify(chengyuList));
-        localStorage.setItem(STORAGE.daily, JSON.stringify(dailyData));
+        localStorage.setItem(STORAGE.dailyModules, JSON.stringify(dailyModulesData));
         localStorage.setItem(STORAGE.countdowns, JSON.stringify(countdowns));
     }
 
-    // ---------- 1. Todo 渲染 + 计时器 ----------
-    let activeTimer = null;
-    let currentTaskId = null;
+    function loadData() {
+        todos = JSON.parse(localStorage.getItem(STORAGE.todos)) || [];
+        examRecords = JSON.parse(localStorage.getItem(STORAGE.exams)) || [];
+        mistakes = JSON.parse(localStorage.getItem(STORAGE.mistakes)) || [];
+        chengyuList = JSON.parse(localStorage.getItem(STORAGE.chengyu)) || [
+            { word: "筚路蓝缕", meaning: "驾着柴车，穿着破衣去开辟山林。形容创业艰辛", review: 3 },
+            { word: "孜孜不倦", meaning: "勤奋努力，不知疲倦", review: 5 },
+            { word: "举一反三", meaning: "从一件事类推而知道许多事", review: 2 },
+            { word: "画蛇添足", meaning: "多此一举，弄巧成拙", review: 1 }
+        ];
+        countdowns = JSON.parse(localStorage.getItem(STORAGE.countdowns)) || [];
+        let raw = JSON.parse(localStorage.getItem(STORAGE.dailyModules));
+        if (raw && Array.isArray(raw) && raw.length > 0 && raw[0].modules) dailyModulesData = raw;
+        else dailyModulesData = [];
+    }
 
+    // ======================== 1. TODO 计划 ========================
+    let activeTimer = null, currentTaskId = null;
     function renderTodos() {
         const container = document.getElementById('todoList');
         if (!container) return;
@@ -307,7 +261,7 @@
             div.className = 'task-item';
             div.innerHTML = `
                 <div><strong>${task.name}</strong> (${task.subject}) ${task.completed ? '✅完成' : '⏳待办'}<br>
-                <span class="badge">累计专注: ${task.totalTime || 0}秒</span></div>
+                <span class="badge">累计专注: ${Math.floor((task.totalTime||0)/60)}分${(task.totalTime||0)%60}秒</span></div>
                 <div class="row-flex">
                     ${!task.completed ? `<button class="startTimerBtn" data-idx="${idx}">⏱️ 开始计时</button>` : ''}
                     ${!task.completed ? `<button class="completeBtn" data-idx="${idx}">✔️ 完成</button>` : ''}
@@ -316,7 +270,7 @@
             `;
             container.appendChild(div);
         });
-        // 绑定计时事件
+        // 绑定计时事件（略，保留原有逻辑）
         document.querySelectorAll('.startTimerBtn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const idx = parseInt(btn.dataset.idx);
@@ -362,30 +316,50 @@
             });
         });
     }
-    document.getElementById('addTaskBtn')?.addEventListener('click', () => {
-        const name = document.getElementById('taskName').value.trim();
-        const subject = document.getElementById('taskSubject').value;
-        if(!name) return alert('请输入任务名称');
-        todos.push({ name, subject, completed: false, totalTime: 0 });
-        saveAll();
-        renderTodos();
-        document.getElementById('taskName').value = '';
-    });
 
-    // 2. 套卷可视化
+    // TODO饼图：根据时间段筛选任务（基于创建时间？我们没有存储任务创建日期，只能统计所有任务的总用时。改进：每个任务增加createdDate字段。为了满足需求，我们可以在添加任务时记录日期，并在计时时累加。这里简单起见：给每个任务增加dateCreated字段。修改添加任务逻辑。
+    // 需要在addTask时记录当前日期。
+    // 并且修改renderTodos显示？不必要，统计时按日期过滤。
+    // 升级数据结构：todos每个任务加 createDate, totalTime。已有的任务默认createDate为今天。
+    function getDateFilteredTasks(startDate, endDate) {
+        // 返回在区间内的任务（按创建日期过滤）
+        return todos.filter(t => {
+            if (!t.createDate) return false; // 旧数据兼容: 如果无日期，归入今天
+            return t.createDate >= startDate && t.createDate <= endDate;
+        });
+    }
+    let todoPieChart = null;
+    function showTodoPieChart(startDateStr, endDateStr) {
+        let filtered = todos.filter(t => {
+            if (!t.createDate) return false;
+            return t.createDate >= startDateStr && t.createDate <= endDateStr;
+        });
+        // 按科目汇总totalTime
+        let subjectTimes = {};
+        filtered.forEach(t => {
+            let sub = t.subject;
+            let sec = t.totalTime || 0;
+            subjectTimes[sub] = (subjectTimes[sub] || 0) + sec;
+        });
+        const labels = Object.keys(subjectTimes);
+        const data = labels.map(l => subjectTimes[l] / 60); // 分钟
+        if (todoPieChart) todoPieChart.destroy();
+        const ctx = document.getElementById('todoPieChart').getContext('2d');
+        todoPieChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec489a','#14b8a6'] }] } });
+    }
+
+    // ======================== 2. 套卷可视化（标签同步名称） ========================
     let chartExam = null;
     function updateExamChart() {
         const avg = examRecords.length ? (examRecords.reduce((sum, e) => sum + (e.correct/e.total)*100,0)/examRecords.length).toFixed(1) : 0;
         document.getElementById('avgAccuracy').innerText = avg;
-        const labels = examRecords.map((_,i)=>`卷${i+1}`);
+        const labels = examRecords.map(e => e.name || '套卷');
         const data = examRecords.map(e => (e.correct/e.total*100).toFixed(1));
         const ctx = document.getElementById('accuracyChart').getContext('2d');
         if(chartExam) chartExam.destroy();
-        chartExam = new Chart(ctx, {
-            type: 'line', data: { labels, datasets: [{ label: '正确率 %', data, borderColor: '#3b82f6', tension: 0.2 }] }
-        });
+        chartExam = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: '正确率 %', data, borderColor: '#3b82f6', tension: 0.2 }] } });
         const recordDiv = document.getElementById('examRecords');
-        recordDiv.innerHTML = examRecords.map((e,i)=>`<div>${e.name || '套卷'}: ${e.correct}/${e.total} (${((e.correct/e.total)*100).toFixed(1)}%) <button class="delExam" data-idx="${i}">❌</button></div>`).join('');
+        recordDiv.innerHTML = examRecords.map((e,i)=>`<div>${e.name}: ${e.correct}/${e.total} (${((e.correct/e.total)*100).toFixed(1)}%) <button class="delExam" data-idx="${i}">❌</button></div>`).join('');
         document.querySelectorAll('.delExam').forEach(btn=>{
             btn.addEventListener('click',(e)=>{
                 examRecords.splice(parseInt(btn.dataset.idx),1);
@@ -394,20 +368,11 @@
             });
         });
     }
-    document.getElementById('addExamBtn')?.addEventListener('click',()=>{
-        let name = document.getElementById('examName').value.trim() || '套卷';
-        let correct = parseInt(document.getElementById('correctNum').value);
-        let total = parseInt(document.getElementById('totalNum').value);
-        if(isNaN(correct)||isNaN(total)||total<=0) return alert('正确题数和总题数须有效');
-        examRecords.push({ name, correct, total });
-        saveAll();
-        updateExamChart();
-        document.getElementById('examName').value=''; document.getElementById('correctNum').value=''; document.getElementById('totalNum').value='';
-    });
 
-    // 3. 错题本
+    // ======================== 3. 错题本 ========================
     function renderMistakes() {
         const container = document.getElementById('mistakeList');
+        if(!container) return;
         container.innerHTML = mistakes.map((m,i)=>`<div class="mistake-item">📌 ${m.category}：${m.text.substring(0,50)}<br>⚠️ ${m.note}<button class="delMistake" data-idx="${i}">删除</button></div>`).join('');
         document.querySelectorAll('.delMistake').forEach(btn=>{
             btn.addEventListener('click',()=>{
@@ -417,75 +382,199 @@
             });
         });
     }
-    document.getElementById('simulateAI')?.addEventListener('click',()=>{
-        const fileInput = document.getElementById('mistakePhoto');
-        if(fileInput.files.length===0){
-            document.getElementById('aiRawText').value = '【模拟识别】某道行测题：2023年某省GDP增长率为5.6%... (可修改)';
-        } else {
-            document.getElementById('aiRawText').value = '📸 已识别图片内容（模拟）：资料分析，问基期比重，正确选项为B。';
-        }
-    });
-    document.getElementById('addMistakeBtn')?.addEventListener('click',()=>{
-        let text = document.getElementById('aiRawText').value.trim();
-        let category = document.getElementById('mistakeCategory').value;
-        let note = document.getElementById('mistakeNote').value.trim();
-        if(!text) return alert('请填写题目内容或拍照识别');
-        mistakes.unshift({ text, category, note: note||'未填原因', date: new Date().toLocaleDateString() });
-        saveAll();
-        renderMistakes();
-        document.getElementById('aiRawText').value = '';
-        document.getElementById('mistakeNote').value = '';
-    });
 
-    // 4. 成语系统
+    // ======================== 4. 成语系统（联网释义 + 测验） ========================
     function renderChengyu() {
         const search = document.getElementById('chengyuSearch')?.value.toLowerCase() || '';
         const filtered = chengyuList.filter(c=>c.word.includes(search) || c.meaning.includes(search));
         const container = document.getElementById('chengyuList');
-        container.innerHTML = filtered.map((c,i)=>`<div class="chengyu-item"><div><b>${c.word}</b> - ${c.meaning}<br>📖复习 ${c.review} 次</div><button class="reviewChengyu" data-idx="${chengyuList.findIndex(cc=>cc.word===c.word)}">背诵+1</button></div>`).join('');
-        document.querySelectorAll('.reviewChengyu').forEach(btn=>{
-            btn.addEventListener('click',()=>{
-                const idx = parseInt(btn.dataset.idx);
-                chengyuList[idx].review += 1;
-                saveAll();
-                renderChengyu();
+        container.innerHTML = filtered.map((c, idx) => `
+            <div class="chengyu-item">
+                <div><b>${c.word}</b> - ${c.meaning}<br>📖复习 ${c.review} 次</div>
+                <div class="row-flex">
+                    <button class="searchMeaning" data-word="${c.word}">🔍 联网释义</button>
+                    <button class="quizBtn" data-word="${c.word}" data-meaning="${c.meaning}" data-idx="${chengyuList.findIndex(cc=>cc.word===c.word)}">📝 测验</button>
+                </div>
+            </div>
+        `).join('');
+        // 联网释义：打开百度搜索
+        document.querySelectorAll('.searchMeaning').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                let word = btn.dataset.word;
+                window.open(`https://www.baidu.com/s?wd=${encodeURIComponent(word + ' 成语 释义')}`, '_blank');
+            });
+        });
+        // 测验按钮
+        document.querySelectorAll('.quizBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                let word = btn.dataset.word;
+                let correctMeaning = btn.dataset.meaning;
+                let idx = parseInt(btn.dataset.idx);
+                startQuiz(word, correctMeaning, idx);
             });
         });
     }
     window.filterChengyu = () => renderChengyu();
-    document.getElementById('addChengyuBtn')?.addEventListener('click',()=>{
-        let w = document.getElementById('newChengyu').value.trim();
-        let m = document.getElementById('newMeaning').value.trim();
-        if(!w||!m) return alert('成语和释义都需要填写');
-        chengyuList.push({ word:w, meaning:m, review:0 });
-        saveAll();
-        renderChengyu();
-        document.getElementById('newChengyu').value=''; document.getElementById('newMeaning').value='';
-    });
 
-    // 5. 日常刷题统计 + 图表
-    let dailyChart = null;
-    function updateDailyChart() {
-        const sorted = [...dailyData].sort((a,b)=>new Date(a.date)-new Date(b.date));
-        const labels = sorted.map(d=>d.date.slice(5));
-        const accuracy = sorted.map(d=> (d.correct/d.total)*100);
-        const ctx = document.getElementById('dailyChart').getContext('2d');
-        if(dailyChart) dailyChart.destroy();
-        dailyChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'每日正确率(%)', data:accuracy, borderColor:'#f97316' }] } });
-        const container = document.getElementById('dailyStats');
-        container.innerHTML = `<div>总记录${dailyData.length}天，平均正确率${dailyData.length?(dailyData.reduce((s,d)=>s+d.correct/d.total,0)/dailyData.length*100).toFixed(1):0}%</div>`;
+    // 生成干扰项（从其他成语随机取3个不同释义，且不与正确释义相同）
+    function getRandomDistractors(correctMeaning, excludeWord) {
+        let candidates = chengyuList.filter(c => c.word !== excludeWord && c.meaning !== correctMeaning);
+        if (candidates.length < 3) {
+            // 补充默认干扰
+            let defaults = ["多此一举", "胡乱猜测", "毫无根据", "自相矛盾"];
+            return defaults.slice(0,3);
+        }
+        // 随机取3个
+        let shuffled = [...candidates];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled.slice(0,3).map(c => c.meaning);
     }
-    document.getElementById('addDailyBtn')?.addEventListener('click',()=>{
-        let date = document.getElementById('dailyDate').value;
-        let corr = parseInt(document.getElementById('dailyCorrect').value);
-        let tot = parseInt(document.getElementById('dailyTotal').value);
-        if(!date || isNaN(corr) || isNaN(tot) || tot<=0) return alert('请完整填写日期和正确/总题数');
-        dailyData.push({ date, correct:corr, total:tot });
-        saveAll();
-        updateDailyChart();
-    });
 
-    // 6. 考试倒计时
+    function startQuiz(word, correctMeaning, chengyuIdx) {
+        let distractors = getRandomDistractors(correctMeaning, word);
+        let options = [correctMeaning, ...distractors];
+        // 随机打乱顺序
+        for (let i = options.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [options[i], options[j]] = [options[j], options[i]];
+        }
+        // 创建模态框
+        const modal = document.createElement('div');
+        modal.className = 'quiz-modal';
+        modal.innerHTML = `
+            <div class="quiz-card">
+                <h3>📖 成语测验：${word}</h3>
+                <p>请选择正确的释义：</p>
+                ${options.map((opt, i) => `<div class="quiz-option" data-opt="${opt.replace(/"/g, '&quot;')}">${String.fromCharCode(65+i)}. ${opt}</div>`).join('')}
+                <button id="closeQuiz" style="margin-top:16px;">取消</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        const optionsDivs = modal.querySelectorAll('.quiz-option');
+        optionsDivs.forEach(div => {
+            div.addEventListener('click', () => {
+                const selected = div.dataset.opt;
+                if (selected === correctMeaning) {
+                    // 正确，增加背诵次数
+                    chengyuList[chengyuIdx].review += 1;
+                    saveAll();
+                    renderChengyu();
+                    alert('✅ 回答正确！背诵次数 +1');
+                    modal.remove();
+                } else {
+                    alert(`❌ 回答错误。正确答案是：${correctMeaning}\n再试试下一个成语吧！`);
+                    modal.remove();
+                }
+            });
+        });
+        modal.querySelector('#closeQuiz').addEventListener('click', () => modal.remove());
+    }
+
+    // ======================== 5. 六大模块统计（饼图+折线） ========================
+    function renderModuleOverview() {
+        let moduleStats = {};
+        MODULES.forEach(m => { moduleStats[m] = { totalCorrect: 0, totalCount: 0 }; });
+        dailyModulesData.forEach(day => {
+            MODULES.forEach(mod => {
+                let rec = day.modules[mod];
+                if (rec && rec.total > 0) {
+                    moduleStats[mod].totalCorrect += rec.correct;
+                    moduleStats[mod].totalCount += rec.total;
+                }
+            });
+        });
+        const container = document.getElementById('moduleOverview');
+        container.innerHTML = MODULES.map(mod => {
+            let acc = moduleStats[mod].totalCount ? ((moduleStats[mod].totalCorrect / moduleStats[mod].totalCount)*100).toFixed(1) : '--';
+            return `<div class="module-card"><div class="name">${mod}</div><div class="accuracy">${acc}%</div><div class="small-note">累计刷题${moduleStats[mod].totalCount}道</div></div>`;
+        }).join('');
+    }
+
+    let moduleLineChart = null;
+    function renderModuleLineChart() {
+        if (!dailyModulesData.length) return;
+        const sorted = [...dailyModulesData].sort((a,b)=>new Date(a.date)-new Date(b.date));
+        const labels = sorted.map(d => d.date.slice(5));
+        const datasets = MODULES.map((mod, idx) => {
+            const data = sorted.map(day => {
+                let rec = day.modules[mod];
+                if (rec && rec.total) return (rec.correct / rec.total * 100).toFixed(1);
+                return null;
+            });
+            const colors = ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec489a'];
+            return { label: mod, data: data, borderColor: colors[idx % colors.length], tension: 0.2, fill: false };
+        });
+        const ctx = document.getElementById('moduleChart').getContext('2d');
+        if (moduleLineChart) moduleLineChart.destroy();
+        moduleLineChart = new Chart(ctx, { type: 'line', data: { labels, datasets } });
+    }
+
+    let modulePieChart = null;
+    function showModulePieChart(startDate, endDate) {
+        let filtered = dailyModulesData.filter(d => d.date >= startDate && d.date <= endDate);
+        let moduleCount = {};
+        MODULES.forEach(m => moduleCount[m] = 0);
+        filtered.forEach(day => {
+            MODULES.forEach(mod => {
+                let rec = day.modules[mod];
+                if (rec && rec.total) moduleCount[mod] += rec.total;
+            });
+        });
+        const labels = MODULES.filter(m => moduleCount[m] > 0);
+        const data = labels.map(m => moduleCount[m]);
+        if (modulePieChart) modulePieChart.destroy();
+        const ctx = document.getElementById('modulePieChart').getContext('2d');
+        modulePieChart = new Chart(ctx, { type: 'pie', data: { labels, datasets: [{ data, backgroundColor: ['#3b82f6','#ef4444','#10b981','#f59e0b','#8b5cf6','#ec489a'] }] } });
+    }
+
+    // 记录模块数据 UI
+    function showModuleInput() {
+        const area = document.getElementById('moduleInputArea');
+        const inputsDiv = document.getElementById('moduleInputs');
+        if (area.style.display === 'none' || !area.style.display) {
+            inputsDiv.innerHTML = MODULES.map(mod => `
+                <div style="margin:8px 0;"><strong>${mod}</strong></div>
+                <div class="row-flex">
+                    <input type="number" id="mod_correct_${mod}" placeholder="正确数" style="width:100px">
+                    <input type="number" id="mod_total_${mod}" placeholder="总题数" style="width:100px">
+                </div>
+            `).join('');
+            area.style.display = 'block';
+        } else {
+            area.style.display = 'none';
+        }
+    }
+
+    function submitModuleData() {
+        const dateInput = document.getElementById('moduleDate');
+        let date = dateInput.value;
+        if (!date) { date = new Date().toISOString().slice(0,10); dateInput.value = date; }
+        let modulesRecord = {};
+        let hasAny = false;
+        for (let mod of MODULES) {
+            let correct = parseInt(document.getElementById(`mod_correct_${mod}`).value) || 0;
+            let total = parseInt(document.getElementById(`mod_total_${mod}`).value) || 0;
+            if (total > 0) {
+                hasAny = true;
+                modulesRecord[mod] = { correct, total };
+            } else if (correct > 0) { alert(`${mod} 总题数不能为0`); return; }
+            else modulesRecord[mod] = { correct:0, total:0 };
+        }
+        if (!hasAny) { alert('请至少填写一个模块的有效数据'); return; }
+        const existingIndex = dailyModulesData.findIndex(d => d.date === date);
+        if (existingIndex !== -1) dailyModulesData[existingIndex].modules = modulesRecord;
+        else dailyModulesData.push({ date, modules: modulesRecord });
+        saveAll();
+        renderModuleOverview();
+        renderModuleLineChart();
+        document.getElementById('moduleInputArea').style.display = 'none';
+        alert(`已保存 ${date} 的模块刷题数据`);
+    }
+
+    // ======================== 倒计时 ========================
     function renderCountdowns() {
         const container = document.getElementById('countdownList');
         if(!container) return;
@@ -507,20 +596,8 @@
             });
         });
     }
-    document.getElementById('addExamCountdown')?.addEventListener('click',()=>{
-        let name = document.getElementById('examNameInput').value.trim();
-        let date = document.getElementById('examDate').value;
-        if(!name||!date) return alert('请填写考试名称和日期');
-        countdowns.push({ name, date });
-        saveAll();
-        renderCountdowns();
-    });
-    document.getElementById('extractBtn')?.addEventListener('click',()=>{
-        let link = document.getElementById('announceLink').value;
-        document.getElementById('extractResult').innerHTML = `🔍 模拟提取：从链接「${link.substring(0,50)}...」中获取到报名时间2026年10月、笔试11月底。请手动添加考试倒计时。`;
-    });
 
-    // 7. 课程推荐
+    // ======================== 课程推荐 ========================
     function loadCourses() {
         const courses = {
             基础阶段: ['粉笔980系统课', '刘文超数量资料', '李梦娇常识'],
@@ -533,37 +610,140 @@
         }
         document.getElementById('courseList').innerHTML = html;
     }
-    // 8. 申论对比
-    document.getElementById('compareAnswer')?.addEventListener('click',()=>{
-        const my = document.getElementById('myAnswer').value;
-        const ref = document.getElementById('refAnswer').value;
-        if(!my && !ref) { document.getElementById('compareResult').innerHTML = '请输入你的答案或参考答案'; return; }
-        if(my === ref) document.getElementById('compareResult').innerHTML = '✅ 答案完全一致！';
-        else document.getElementById('compareResult').innerHTML = `📌 差异提示：参考答案和你的答案不完全相同，建议对照要点。\n你的答案长度：${my.length}字\n参考答案长度：${ref.length}字`;
-    });
 
-    // 初次渲染所有
-    function init() {
+    // ======================== OCR ========================
+    async function performOCR(file) {
+        const statusDiv = document.getElementById('ocrStatus');
+        statusDiv.innerHTML = '⏳ OCR识别中...';
+        try {
+            const { data: { text } } = await Tesseract.recognize(file, 'chi_sim+eng');
+            statusDiv.innerHTML = '✅ 识别完成';
+            return text;
+        } catch (error) {
+            statusDiv.innerHTML = '❌ 识别失败';
+            return '';
+        }
+    }
+    function bindOcrButton() {
+        document.getElementById('realOcrBtn').addEventListener('click', async () => {
+            const file = document.getElementById('mistakePhoto').files[0];
+            if (!file) { alert('请先选择图片'); return; }
+            const text = await performOCR(file);
+            document.getElementById('ocrText').value = text;
+        });
+    }
+
+    // ======================== 初始化所有 ========================
+    function initAllFunctions() {
+        loadData();
         renderTodos();
         updateExamChart();
         renderMistakes();
         renderChengyu();
-        updateDailyChart();
         renderCountdowns();
         loadCourses();
-        if(dailyData.length===0) {
-            // 示例数据
-            dailyData.push({date:'2026-04-01', correct:32, total:40},{date:'2026-04-02', correct:35, total:40});
-            saveAll();
-            updateDailyChart();
+        bindOcrButton();
+        renderModuleOverview();
+        renderModuleLineChart();
+
+        // 添加任务时自动记录创建日期
+        document.getElementById('addTaskBtn').onclick = () => {
+            const name = document.getElementById('taskName').value.trim();
+            if(!name) return alert('请输入任务名称');
+            const today = new Date().toISOString().slice(0,10);
+            todos.push({ name, subject: document.getElementById('taskSubject').value, completed: false, totalTime: 0, createDate: today });
+            saveAll(); renderTodos();
+            document.getElementById('taskName').value = '';
+        };
+        document.getElementById('addExamBtn').onclick = () => {
+            let correct = parseInt(document.getElementById('correctNum').value);
+            let total = parseInt(document.getElementById('totalNum').value);
+            if(isNaN(correct)||isNaN(total)||total<=0) return alert('正确数和总题数有效');
+            examRecords.push({ name: document.getElementById('examName').value.trim()||'套卷', correct, total });
+            saveAll(); updateExamChart();
+            document.getElementById('examName').value=''; document.getElementById('correctNum').value=''; document.getElementById('totalNum').value='';
+        };
+        document.getElementById('addMistakeBtn').onclick = () => {
+            let text = document.getElementById('ocrText').value.trim();
+            if(!text) return alert('请先识别或输入题目');
+            mistakes.unshift({ text, category: document.getElementById('mistakeCategory').value, note: document.getElementById('mistakeNote').value.trim()||'未填', date: new Date().toLocaleDateString() });
+            saveAll(); renderMistakes();
+            document.getElementById('ocrText').value = ''; document.getElementById('mistakeNote').value = '';
+        };
+        document.getElementById('addChengyuBtn').onclick = () => {
+            let w = document.getElementById('newChengyu').value.trim();
+            let m = document.getElementById('newMeaning').value.trim();
+            if(!w||!m) return alert('请填写成语和释义');
+            chengyuList.push({ word:w, meaning:m, review:0 });
+            saveAll(); renderChengyu();
+            document.getElementById('newChengyu').value=''; document.getElementById('newMeaning').value='';
+        };
+        document.getElementById('addExamCountdown').onclick = () => {
+            let name = document.getElementById('examNameInput').value.trim();
+            let date = document.getElementById('examDate').value;
+            if(!name||!date) return alert('请填写考试名称和日期');
+            countdowns.push({ name, date });
+            saveAll(); renderCountdowns();
+        };
+        document.getElementById('extractBtn').onclick = () => {
+            let link = document.getElementById('announceLink').value;
+            document.getElementById('extractResult').innerHTML = `🔍 模拟提取：${link.substring(0,50)}... 报名10月，笔试11月。请手动添加倒计时。`;
+        };
+        document.getElementById('compareAnswer').onclick = () => {
+            const my = document.getElementById('myAnswer').value;
+            const ref = document.getElementById('refAnswer').value;
+            if(!my && !ref) { document.getElementById('compareResult').innerHTML = '请输入答案'; return; }
+            if(my === ref) document.getElementById('compareResult').innerHTML = '✅ 完全一致';
+            else document.getElementById('compareResult').innerHTML = `📌 不一致。你的长度${my.length}字，参考${ref.length}字。`;
+        };
+
+        // 模块统计按钮
+        document.getElementById('recordModuleBtn').onclick = showModuleInput;
+        document.getElementById('hideModuleInput').onclick = () => { document.getElementById('moduleInputArea').style.display = 'none'; };
+        document.getElementById('submitModuleData').onclick = submitModuleData;
+
+        // 饼图时段选择
+        function getDateRange(type, startInput, endInput) {
+            let today = new Date();
+            if (type === 'today') {
+                let s = today.toISOString().slice(0,10);
+                return { start: s, end: s };
+            } else if (type === 'week') {
+                let day = today.getDay();
+                let diff = day === 0 ? 6 : day-1;
+                let mon = new Date(today.getTime() - diff*86400000);
+                let sun = new Date(mon.getTime() + 6*86400000);
+                return { start: mon.toISOString().slice(0,10), end: sun.toISOString().slice(0,10) };
+            } else if (type === 'month') {
+                let start = new Date(today.getFullYear(), today.getMonth(), 1);
+                let end = new Date(today.getFullYear(), today.getMonth()+1, 0);
+                return { start: start.toISOString().slice(0,10), end: end.toISOString().slice(0,10) };
+            } else if (type === 'custom') {
+                let s = startInput.value, e = endInput.value;
+                if (!s || !e) return null;
+                return { start: s, end: e };
+            }
+            return null;
         }
-        if(examRecords.length===0){
-            examRecords.push({name:'模考1', correct:68, total:100},{name:'模考2', correct:72, total:100});
-            saveAll();
-            updateExamChart();
-        }
+        // TODO饼图事件
+        const todoStart = document.getElementById('todoStatStart'), todoEnd = document.getElementById('todoStatEnd');
+        document.getElementById('todoStatDaily').onclick = () => { let r = getDateRange('today'); if(r) showTodoPieChart(r.start, r.end); };
+        document.getElementById('todoStatWeek').onclick = () => { let r = getDateRange('week'); if(r) showTodoPieChart(r.start, r.end); };
+        document.getElementById('todoStatMonth').onclick = () => { let r = getDateRange('month'); if(r) showTodoPieChart(r.start, r.end); };
+        document.getElementById('todoStatCustom').onclick = () => { let r = getDateRange('custom', todoStart, todoEnd); if(r) showTodoPieChart(r.start, r.end); else alert('请选择起止日期'); };
+        document.getElementById('todoStatShow').onclick = () => { let r = getDateRange('custom', todoStart, todoEnd); if(r) showTodoPieChart(r.start, r.end); else alert('请先选择日期范围'); };
+        // 模块饼图事件
+        const modStart = document.getElementById('moduleStatStart'), modEnd = document.getElementById('moduleStatEnd');
+        document.getElementById('moduleStatDaily').onclick = () => { let r = getDateRange('today'); if(r) showModulePieChart(r.start, r.end); };
+        document.getElementById('moduleStatWeek').onclick = () => { let r = getDateRange('week'); if(r) showModulePieChart(r.start, r.end); };
+        document.getElementById('moduleStatMonth').onclick = () => { let r = getDateRange('month'); if(r) showModulePieChart(r.start, r.end); };
+        document.getElementById('moduleStatCustom').onclick = () => { let r = getDateRange('custom', modStart, modEnd); if(r) showModulePieChart(r.start, r.end); else alert('请选择起止日期'); };
+        document.getElementById('moduleStatShow').onclick = () => { let r = getDateRange('custom', modStart, modEnd); if(r) showModulePieChart(r.start, r.end); else alert('请先选择日期范围'); };
+        // 默认显示今日饼图
+        let todayRange = getDateRange('today');
+        if(todayRange) showTodoPieChart(todayRange.start, todayRange.end);
+        if(todayRange) showModulePieChart(todayRange.start, todayRange.end);
     }
-    init();
 </script>
 </body>
 </html>
