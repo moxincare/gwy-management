@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>WaytoGWY 豪华备考管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background: #f0f2f5;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .sub {
+            color: #475569;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 1.2rem 1.5rem;
+            transition: all 0.2s;
+            border: 1px solid #e2e8f0;
+        }
+        .card h2 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-left: 4px solid #3b82f6;
+            padding-left: 12px;
+        }
+        .card h3 {
+            font-size: 1.1rem;
+            margin: 0.8rem 0 0.5rem;
+            color: #0f172a;
+        }
+        button, .btn-like {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 6px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 16px;
+            font-size: 0.9rem;
+        }
+        .task-item, .mistake-item, .chengyu-item, .daily-item {
+            background: #f8fafc;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .badge {
+            background: #e2e8f0;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+        .timer {
+            font-family: monospace;
+            font-weight: bold;
+            background: #1e293b;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+        }
+        .row-flex {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        canvas {
+            max-height: 200px;
+            width: 100%;
+        }
+        hr {
+            margin: 16px 0;
+        }
+        .small-note {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        @media (max-width: 700px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            body {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎯 WaytoGWY 豪华备考系统 <span style="font-size:0.9rem;">✨ Todo+复盘+错题+成语+倒计时</span></h1>
+    <div class="sub">📸 拍照上传AI模拟 · 手动录入一样强大 · 数据自动保存本地</div>
+
+    <div class="grid">
+        <!-- 左侧: Todo 计划 + 计时器 -->
+        <div class="card">
+            <h2>✅ Todo 计划（支持计时）</h2>
+            <div class="row-flex">
+                <input type="text" id="taskName" placeholder="任务名称，例：资料分析刷题" style="flex:2">
+                <select id="taskSubject">
+                    <option>言语理解</option><option>判断推理</option><option>资料分析</option>
+                    <option>数量关系</option><option>常识</option><option>申论</option>
+                </select>
+                <button id="addTaskBtn">➕ 添加任务</button>
+            </div>
+            <div id="todoList"></div>
+            <div class="small-note">⏱️ 点击“开始计时”记录专注时长，完成后自动计入统计</div>
+        </div>
+
+        <!-- 右侧: 套卷可视化复盘（上传各板块正确数） -->
+        <div class="card">
+            <h2>📊 套卷可视化分析</h2>
+            <p>平均正确率 <strong id="avgAccuracy">--</strong> %</p>
+            <canvas id="accuracyChart" width="400" height="180" style="max-height:180px"></canvas>
+            <h3>➕ 录入套卷数据</h3>
+            <div class="row-flex">
+                <input type="text" id="examName" placeholder="套卷名称, 如2026国考">
+                <input type="number" id="correctNum" placeholder="正确题数" style="width:100px">
+                <input type="number" id="totalNum" placeholder="总题数" style="width:100px">
+                <button id="addExamBtn">录入</button>
+            </div>
+            <div id="examRecords" style="max-height:150px; overflow-y:auto; margin-top:10px;"></div>
+            <div class="small-note">💡 自动计算正确率并绘制趋势图</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- 错题集（AI拍照模拟分类） -->
+        <div class="card">
+            <h2>📸 错题本 · AI拍照分类</h2>
+            <div class="row-flex">
+                <input type="file" id="mistakePhoto" accept="image/*" style="flex:1">
+                <button id="simulateAI">🤖 模拟AI识别</button>
+            </div>
+            <textarea id="aiRawText" rows="2" placeholder="AI识别出的题目文本将显示在这里... 你可以手动修改"></textarea>
+            <select id="mistakeCategory">
+                <option>言语理解</option><option>判断推理</option><option>资料分析</option>
+                <option>数量关系</option><option>常识</option><option>申论</option>
+            </select>
+            <div class="row-flex">
+                <input type="text" id="mistakeNote" placeholder="错误原因/知识点">
+                <button id="addMistakeBtn">📌 添加到错题本</button>
+            </div>
+            <div id="mistakeList"></div>
+            <div class="small-note">📷 拍照后点击“模拟AI识别”会随机生成示例文本，你可以改成真实题目。</div>
+        </div>
+
+        <!-- 成语速查与背诵 -->
+        <div class="card">
+            <h2>📖 成语速查 · 背诵系统</h2>
+            <input type="text" id="chengyuSearch" placeholder="搜索成语" onkeyup="filterChengyu()">
+            <div class="row-flex">
+                <input type="text" id="newChengyu" placeholder="新成语">
+                <input type="text" id="newMeaning" placeholder="释义">
+                <button id="addChengyuBtn">➕ 添加成语</button>
+            </div>
+            <div id="chengyuList"></div>
+            <div class="small-note">⭐ 点击“背诵+1”增加复习次数，次数越高越熟练</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- 日常刷题统计 + 考试倒计时 -->
+        <div class="card">
+            <h2>📈 日常刷题数据统计</h2>
+            <div class="row-flex">
+                <input type="date" id="dailyDate">
+                <input type="number" id="dailyCorrect" placeholder="正确数">
+                <input type="number" id="dailyTotal" placeholder="总题数">
+                <button id="addDailyBtn">记录</button>
+            </div>
+            <canvas id="dailyChart" style="max-height:180px"></canvas>
+            <div id="dailyStats"></div>
+        </div>
+
+        <div class="card">
+            <h2>⏰ 考试倒计时</h2>
+            <div class="row-flex">
+                <input type="text" id="examNameInput" placeholder="考试名称，例：2027国考">
+                <input type="date" id="examDate">
+                <button id="addExamCountdown">添加考试</button>
+            </div>
+            <div id="countdownList"></div>
+            <div class="small-note">📌 支持多个考试同时倒计时，自动保存</div>
+            <hr>
+            <h3>🔗 公告链接提取（模拟）</h3>
+            <input type="text" id="announceLink" placeholder="粘贴公告链接">
+            <button id="extractBtn">一键提取时间节点</button>
+            <div id="extractResult" class="small-note" style="background:#f1f5f9; padding:8px; border-radius:16px;"></div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- 课程推荐 + 申论答案对比 -->
+        <div class="card">
+            <h2>🎓 社区课程推荐</h2>
+            <div id="courseList" style="display:flex; flex-direction:column; gap:8px;">
+                <!-- 动态js生成 -->
+            </div>
+        </div>
+        <div class="card">
+            <h2>📑 申论答案对比</h2>
+            <textarea id="myAnswer" rows="3" placeholder="你的答案"></textarea>
+            <textarea id="refAnswer" rows="3" placeholder="参考答案"></textarea>
+            <button id="compareAnswer">对比差异</button>
+            <div id="compareResult" style="background:#f8fafc; border-radius:16px; padding:10px; margin-top:8px; white-space:pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 数据存储 key ----------
+    const STORAGE = {
+        todos: 'gwy_todos',
+        exams: 'gwy_exams',      // 套卷记录
+        mistakes: 'gwy_mistakes',
+        chengyu: 'gwy_chengyu',
+        daily: 'gwy_daily',
+        countdowns: 'gwy_countdowns'
+    };
+
+    // 初始化默认数据
+    let todos = JSON.parse(localStorage.getItem(STORAGE.todos)) || [];
+    let examRecords = JSON.parse(localStorage.getItem(STORAGE.exams)) || [];
+    let mistakes = JSON.parse(localStorage.getItem(STORAGE.mistakes)) || [];
+    let chengyuList = JSON.parse(localStorage.getItem(STORAGE.chengyu)) || [
+        { word: "筚路蓝缕", meaning: "驾着柴车，穿着破衣去开辟山林。形容创业艰辛", review: 3 },
+        { word: "孜孜不倦", meaning: "勤奋努力，不知疲倦", review: 5 },
+        { word: "举一反三", meaning: "从一件事类推而知道许多事", review: 2 }
+    ];
+    let dailyData = JSON.parse(localStorage.getItem(STORAGE.daily)) || [];
+    let countdowns = JSON.parse(localStorage.getItem(STORAGE.countdowns)) || [];
+
+    // 辅助保存
+    function saveAll() {
+        localStorage.setItem(STORAGE.todos, JSON.stringify(todos));
+        localStorage.setItem(STORAGE.exams, JSON.stringify(examRecords));
+        localStorage.setItem(STORAGE.mistakes, JSON.stringify(mistakes));
+        localStorage.setItem(STORAGE.chengyu, JSON.stringify(chengyuList));
+        localStorage.setItem(STORAGE.daily, JSON.stringify(dailyData));
+        localStorage.setItem(STORAGE.countdowns, JSON.stringify(countdowns));
+    }
+
+    // ---------- 1. Todo 渲染 + 计时器 ----------
+    let activeTimer = null;
+    let currentTaskId = null;
+
+    function renderTodos() {
+        const container = document.getElementById('todoList');
+        if (!container) return;
+        container.innerHTML = '';
+        todos.forEach((task, idx) => {
+            const div = document.createElement('div');
+            div.className = 'task-item';
+            div.innerHTML = `
+                <div><strong>${task.name}</strong> (${task.subject}) ${task.completed ? '✅完成' : '⏳待办'}<br>
+                <span class="badge">累计专注: ${task.totalTime || 0}秒</span></div>
+                <div class="row-flex">
+                    ${!task.completed ? `<button class="startTimerBtn" data-idx="${idx}">⏱️ 开始计时</button>` : ''}
+                    ${!task.completed ? `<button class="completeBtn" data-idx="${idx}">✔️ 完成</button>` : ''}
+                    <button class="delTodoBtn" data-idx="${idx}">🗑️ 删除</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+        // 绑定计时事件
+        document.querySelectorAll('.startTimerBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                if (activeTimer) clearInterval(activeTimer);
+                currentTaskId = idx;
+                let seconds = 0;
+                const timerSpan = document.createElement('span');
+                timerSpan.className = 'timer';
+                btn.parentElement.insertBefore(timerSpan, btn);
+                btn.textContent = '计时中...';
+                activeTimer = setInterval(() => {
+                    seconds++;
+                    timerSpan.innerText = `${seconds}秒`;
+                }, 1000);
+                const stopTimer = () => {
+                    if (activeTimer) {
+                        clearInterval(activeTimer);
+                        activeTimer = null;
+                        todos[currentTaskId].totalTime = (todos[currentTaskId].totalTime || 0) + seconds;
+                        saveAll();
+                        renderTodos();
+                    }
+                };
+                const stopHandler = () => { stopTimer(); btn.removeEventListener('click', stopHandler); };
+                btn.addEventListener('click', stopHandler, { once: true });
+            });
+        });
+        document.querySelectorAll('.completeBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(btn.dataset.idx);
+                todos[idx].completed = true;
+                if (activeTimer && currentTaskId === idx) clearInterval(activeTimer);
+                saveAll();
+                renderTodos();
+            });
+        });
+        document.querySelectorAll('.delTodoBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                todos.splice(parseInt(btn.dataset.idx),1);
+                if(activeTimer) clearInterval(activeTimer);
+                saveAll();
+                renderTodos();
+            });
+        });
+    }
+    document.getElementById('addTaskBtn')?.addEventListener('click', () => {
+        const name = document.getElementById('taskName').value.trim();
+        const subject = document.getElementById('taskSubject').value;
+        if(!name) return alert('请输入任务名称');
+        todos.push({ name, subject, completed: false, totalTime: 0 });
+        saveAll();
+        renderTodos();
+        document.getElementById('taskName').value = '';
+    });
+
+    // 2. 套卷可视化
+    let chartExam = null;
+    function updateExamChart() {
+        const avg = examRecords.length ? (examRecords.reduce((sum, e) => sum + (e.correct/e.total)*100,0)/examRecords.length).toFixed(1) : 0;
+        document.getElementById('avgAccuracy').innerText = avg;
+        const labels = examRecords.map((_,i)=>`卷${i+1}`);
+        const data = examRecords.map(e => (e.correct/e.total*100).toFixed(1));
+        const ctx = document.getElementById('accuracyChart').getContext('2d');
+        if(chartExam) chartExam.destroy();
+        chartExam = new Chart(ctx, {
+            type: 'line', data: { labels, datasets: [{ label: '正确率 %', data, borderColor: '#3b82f6', tension: 0.2 }] }
+        });
+        const recordDiv = document.getElementById('examRecords');
+        recordDiv.innerHTML = examRecords.map((e,i)=>`<div>${e.name || '套卷'}: ${e.correct}/${e.total} (${((e.correct/e.total)*100).toFixed(1)}%) <button class="delExam" data-idx="${i}">❌</button></div>`).join('');
+        document.querySelectorAll('.delExam').forEach(btn=>{
+            btn.addEventListener('click',(e)=>{
+                examRecords.splice(parseInt(btn.dataset.idx),1);
+                saveAll();
+                updateExamChart();
+            });
+        });
+    }
+    document.getElementById('addExamBtn')?.addEventListener('click',()=>{
+        let name = document.getElementById('examName').value.trim() || '套卷';
+        let correct = parseInt(document.getElementById('correctNum').value);
+        let total = parseInt(document.getElementById('totalNum').value);
+        if(isNaN(correct)||isNaN(total)||total<=0) return alert('正确题数和总题数须有效');
+        examRecords.push({ name, correct, total });
+        saveAll();
+        updateExamChart();
+        document.getElementById('examName').value=''; document.getElementById('correctNum').value=''; document.getElementById('totalNum').value='';
+    });
+
+    // 3. 错题本
+    function renderMistakes() {
+        const container = document.getElementById('mistakeList');
+        container.innerHTML = mistakes.map((m,i)=>`<div class="mistake-item">📌 ${m.category}：${m.text.substring(0,50)}<br>⚠️ ${m.note}<button class="delMistake" data-idx="${i}">删除</button></div>`).join('');
+        document.querySelectorAll('.delMistake').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                mistakes.splice(parseInt(btn.dataset.idx),1);
+                saveAll();
+                renderMistakes();
+            });
+        });
+    }
+    document.getElementById('simulateAI')?.addEventListener('click',()=>{
+        const fileInput = document.getElementById('mistakePhoto');
+        if(fileInput.files.length===0){
+            document.getElementById('aiRawText').value = '【模拟识别】某道行测题：2023年某省GDP增长率为5.6%... (可修改)';
+        } else {
+            document.getElementById('aiRawText').value = '📸 已识别图片内容（模拟）：资料分析，问基期比重，正确选项为B。';
+        }
+    });
+    document.getElementById('addMistakeBtn')?.addEventListener('click',()=>{
+        let text = document.getElementById('aiRawText').value.trim();
+        let category = document.getElementById('mistakeCategory').value;
+        let note = document.getElementById('mistakeNote').value.trim();
+        if(!text) return alert('请填写题目内容或拍照识别');
+        mistakes.unshift({ text, category, note: note||'未填原因', date: new Date().toLocaleDateString() });
+        saveAll();
+        renderMistakes();
+        document.getElementById('aiRawText').value = '';
+        document.getElementById('mistakeNote').value = '';
+    });
+
+    // 4. 成语系统
+    function renderChengyu() {
+        const search = document.getElementById('chengyuSearch')?.value.toLowerCase() || '';
+        const filtered = chengyuList.filter(c=>c.word.includes(search) || c.meaning.includes(search));
+        const container = document.getElementById('chengyuList');
+        container.innerHTML = filtered.map((c,i)=>`<div class="chengyu-item"><div><b>${c.word}</b> - ${c.meaning}<br>📖复习 ${c.review} 次</div><button class="reviewChengyu" data-idx="${chengyuList.findIndex(cc=>cc.word===c.word)}">背诵+1</button></div>`).join('');
+        document.querySelectorAll('.reviewChengyu').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                const idx = parseInt(btn.dataset.idx);
+                chengyuList[idx].review += 1;
+                saveAll();
+                renderChengyu();
+            });
+        });
+    }
+    window.filterChengyu = () => renderChengyu();
+    document.getElementById('addChengyuBtn')?.addEventListener('click',()=>{
+        let w = document.getElementById('newChengyu').value.trim();
+        let m = document.getElementById('newMeaning').value.trim();
+        if(!w||!m) return alert('成语和释义都需要填写');
+        chengyuList.push({ word:w, meaning:m, review:0 });
+        saveAll();
+        renderChengyu();
+        document.getElementById('newChengyu').value=''; document.getElementById('newMeaning').value='';
+    });
+
+    // 5. 日常刷题统计 + 图表
+    let dailyChart = null;
+    function updateDailyChart() {
+        const sorted = [...dailyData].sort((a,b)=>new Date(a.date)-new Date(b.date));
+        const labels = sorted.map(d=>d.date.slice(5));
+        const accuracy = sorted.map(d=> (d.correct/d.total)*100);
+        const ctx = document.getElementById('dailyChart').getContext('2d');
+        if(dailyChart) dailyChart.destroy();
+        dailyChart = new Chart(ctx, { type:'line', data:{ labels, datasets:[{ label:'每日正确率(%)', data:accuracy, borderColor:'#f97316' }] } });
+        const container = document.getElementById('dailyStats');
+        container.innerHTML = `<div>总记录${dailyData.length}天，平均正确率${dailyData.length?(dailyData.reduce((s,d)=>s+d.correct/d.total,0)/dailyData.length*100).toFixed(1):0}%</div>`;
+    }
+    document.getElementById('addDailyBtn')?.addEventListener('click',()=>{
+        let date = document.getElementById('dailyDate').value;
+        let corr = parseInt(document.getElementById('dailyCorrect').value);
+        let tot = parseInt(document.getElementById('dailyTotal').value);
+        if(!date || isNaN(corr) || isNaN(tot) || tot<=0) return alert('请完整填写日期和正确/总题数');
+        dailyData.push({ date, correct:corr, total:tot });
+        saveAll();
+        updateDailyChart();
+    });
+
+    // 6. 考试倒计时
+    function renderCountdowns() {
+        const container = document.getElementById('countdownList');
+        if(!container) return;
+        let html = '';
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        countdowns.forEach((cd,idx)=>{
+            const target = new Date(cd.date);
+            const diffDays = Math.ceil((target - today) / (1000*60*60*24));
+            const status = diffDays>=0 ? `还有${diffDays}天` : `已过${-diffDays}天`;
+            html += `<div class="task-item"><strong>${cd.name}</strong> ${cd.date} · ${status} <button class="delCountdown" data-idx="${idx}">删除</button></div>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll('.delCountdown').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                countdowns.splice(parseInt(btn.dataset.idx),1);
+                saveAll();
+                renderCountdowns();
+            });
+        });
+    }
+    document.getElementById('addExamCountdown')?.addEventListener('click',()=>{
+        let name = document.getElementById('examNameInput').value.trim();
+        let date = document.getElementById('examDate').value;
+        if(!name||!date) return alert('请填写考试名称和日期');
+        countdowns.push({ name, date });
+        saveAll();
+        renderCountdowns();
+    });
+    document.getElementById('extractBtn')?.addEventListener('click',()=>{
+        let link = document.getElementById('announceLink').value;
+        document.getElementById('extractResult').innerHTML = `🔍 模拟提取：从链接「${link.substring(0,50)}...」中获取到报名时间2026年10月、笔试11月底。请手动添加考试倒计时。`;
+    });
+
+    // 7. 课程推荐
+    function loadCourses() {
+        const courses = {
+            基础阶段: ['粉笔980系统课', '刘文超数量资料', '李梦娇常识'],
+            拔高阶段: ['花生十三资料分析', '钩不了沉判断', '葛欣言语'],
+            突破阶段: ['龙飞图推', '灰兔数量', '站长申论']
+        };
+        let html = '';
+        for(let [phase, list] of Object.entries(courses)){
+            html += `<div><strong>${phase}</strong><ul>${list.map(c=>`<li>${c}</li>`).join('')}</ul></div>`;
+        }
+        document.getElementById('courseList').innerHTML = html;
+    }
+    // 8. 申论对比
+    document.getElementById('compareAnswer')?.addEventListener('click',()=>{
+        const my = document.getElementById('myAnswer').value;
+        const ref = document.getElementById('refAnswer').value;
+        if(!my && !ref) { document.getElementById('compareResult').innerHTML = '请输入你的答案或参考答案'; return; }
+        if(my === ref) document.getElementById('compareResult').innerHTML = '✅ 答案完全一致！';
+        else document.getElementById('compareResult').innerHTML = `📌 差异提示：参考答案和你的答案不完全相同，建议对照要点。\n你的答案长度：${my.length}字\n参考答案长度：${ref.length}字`;
+    });
+
+    // 初次渲染所有
+    function init() {
+        renderTodos();
+        updateExamChart();
+        renderMistakes();
+        renderChengyu();
+        updateDailyChart();
+        renderCountdowns();
+        loadCourses();
+        if(dailyData.length===0) {
+            // 示例数据
+            dailyData.push({date:'2026-04-01', correct:32, total:40},{date:'2026-04-02', correct:35, total:40});
+            saveAll();
+            updateDailyChart();
+        }
+        if(examRecords.length===0){
+            examRecords.push({name:'模考1', correct:68, total:100},{name:'模考2', correct:72, total:100});
+            saveAll();
+            updateExamChart();
+        }
+    }
+    init();
+</script>
+</body>
+</html>
